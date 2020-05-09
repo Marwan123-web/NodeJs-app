@@ -28,7 +28,9 @@ exports.myCourses = async (req, res, next) => {
 
 // -------------------Add Task--------------------------
 exports.addTask = async (req, res, next) => {
-    const { courseId, taskType, taskPath } = req.body
+    let taskType = req.body.type;
+    let taskPath = req.body.path;
+    let courseId = req.params.id;
     try {
         let checkCourseId = await Course.findOne({
             courseCode: courseId
@@ -62,10 +64,10 @@ exports.addTask = async (req, res, next) => {
 
 // -------------------Delete Task--------------------------
 exports.deleteTask = async (req, res, next) => {
-    let code = req.body.courseCode;
-    let taskname = req.body.taskname;
+    let code = req.params.id;
+    let taskname = req.params.taskname;
     try {
-        let checkforcourse = await courseModel.findOne({
+        let checkforcourse = await Course.findOne({
             courseCode: code
         });
         if (!checkforcourse) {
@@ -109,7 +111,8 @@ exports.getTasks = async (req, res, next) => {
 
 // -------------------Add Lecture--------------------------
 exports.addLecture = async (req, res, next) => {
-    const { courseCode, lectureNumber, lectureLocation, beacon_id } = req.body
+    const { lectureNumber, lectureLocation, beacon_id } = req.body
+    let courseCode = req.params.id;
     try {
         let checkCourseId = await Course.findOne({
             courseCode
@@ -138,11 +141,13 @@ exports.addLecture = async (req, res, next) => {
 
 // -------------------Add Attendance--------------------------
 exports.addAttendance = async (req, res, next) => {
-    const { courseId, lectureNumber, beacon_id } = req.body
+    const { lectureNumber, beacon_id } = req.body
+    let courseId = req.params.id;
     try {
         let Students = await teacherService.getCourseStudents(courseId);
+
         let checkCourseId = await Course.findOne({
-            courseCode
+            courseCode: courseId
         });
         if (!checkCourseId) {
             return res.status(400).json({
@@ -150,8 +155,9 @@ exports.addAttendance = async (req, res, next) => {
             });
         }
         else {
+
             for (var i = 0; i < Students.length; i++) {
-                stu = Students[i];
+                let stu = Students[i];
                 teacherService.addAttendance(stu._id, courseId, lectureNumber, beacon_id);
             }
         }
@@ -194,9 +200,10 @@ exports.viewAttendance = async (req, res, next) => {
 // ------------------------------------------------------------------------------------------------------------------
 
 exports.myGrades = async (req, res, next) => {
-    let id = res.locals.loggedInUser;
-    let courseId = req.body.courseId;
-    teacherService.MyGrades(id, courseId).then((Grades) => {
+    let id = req.params.id;
+    let courseId = req.params.courseCode;
+    let gradeType=req.params.gradeType;
+    teacherService.MyGrades(id, courseId,gradeType).then((Grades) => {
         if (Grades) {
             res.json(Grades);
         }
@@ -211,12 +218,19 @@ exports.myGrades = async (req, res, next) => {
 
 
 exports.attendme = async (req, res, next) => {
-    let id = res.locals.loggedInUser;
-    let courseId = req.body.courseId;
+    let id = req.params.id
+    let courseId = req.params.courseCode;
     let lectureNumber = req.body.lectureNumber;
     let beacon_Id = req.body.beacon_id;
     try {
-        teacherService.attendme(id, courseId, lectureNumber, beacon_Id);
+        teacherService.attendme(id, courseId, lectureNumber, beacon_Id).then((data) => {
+            if (data) {
+                res.json({ msg: 'You Attended successfuly' });
+            }
+            else {
+                res.status(500).json({ msg: "something wrong in your data" });
+            }
+        });
     } catch (err) {
         console.log(err.message);
         res.status(500).send("Error in Viewing");
@@ -225,8 +239,8 @@ exports.attendme = async (req, res, next) => {
 
 
 exports.viewMyAttendance = async (req, res, next) => {
-    let id = res.locals.loggedInUser;
-    let courseId = req.body.courseId
+    let id = req.params.id;
+    let courseId = req.params.courseCode;
     try {
         teacherService.viewMyAttendance(id, courseId).then((sheet) => {
             if (sheet) {

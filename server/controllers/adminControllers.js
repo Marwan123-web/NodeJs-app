@@ -49,9 +49,10 @@ exports.login = async (req, res, next) => {
     try {
         const { _id, password } = req.body;
         const user = await User.findOne({ _id });
-        if (!user) return next(new Error('User does not exist'));
+        // if (!user) return next(new Error('User does not exist'));
+        if (!user) res.json('ID or Password is not correct');
         const validPassword = await validatePassword(password, user.password);
-        if (!validPassword) return next(new Error('Password is not correct'))
+        if (!validPassword) res.json('ID or Password is not correct');
         const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
             expiresIn: "1d"
         });
@@ -605,23 +606,19 @@ exports.getCourseStudents = async (req, res, next) => {
 exports.addGrade = async (req, res, next) => {
     const { studentId, gradeType, score } = req.body
     let courseId = req.params.courseCode;
+    console.log(req.body)
     try {
         let checkForStudent = await User.findOne({ _id: studentId });
-        let checkStudentId = await Grade.findOne({
-            studentId
+        let checkStudentGrade = await Grade.findOne({
+            studentId, courseId, gradeType
         });
-        let checkCourseId = await Grade.findOne({
-            courseId
-        });
-        let checkGradeType = await Grade.findOne({
-            gradeType
-        });
+
         if (!checkForStudent) {
             return res.status(400).json({
                 msg: "Student Not Found"
             });
         }
-        else if (checkStudentId && checkCourseId && checkGradeType) {
+        else if (checkStudentGrade) {
             return res.status(400).json({
                 msg: "Grade Already Exists"
             });

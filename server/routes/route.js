@@ -78,11 +78,11 @@ router.delete('/delete/course/grade/:courseCode/:type', adminController.deleteCo
 
 // ----------------POST Requests----------------
 
-router.post('/add/course/task', TeacherStudentController.addTask);
+router.post('/add/course/task/:id', TeacherStudentController.addTask);
 
-router.post('/add/course/lecture', TeacherStudentController.addLecture);
+router.post('/add/course/lecture/:id', TeacherStudentController.addLecture);
 
-router.post('/add/course/attendance', TeacherStudentController.addAttendance);
+router.post('/add/course/attendance/:id', TeacherStudentController.addAttendance);
 
 
 // ----------------GET Requests----------------
@@ -96,7 +96,7 @@ router.get('/course/attendance/sheet', TeacherStudentController.viewAttendance);
 
 // ----------------DELETE Requests----------------
 
-router.delete('delete/task', TeacherStudentController.deleteTask);
+router.delete('/delete/course/task/:id/:taskname', TeacherStudentController.deleteTask);
 
 
 
@@ -109,14 +109,14 @@ router.delete('delete/task', TeacherStudentController.deleteTask);
 
 // ----------------POST Requests----------------
 
-router.post('/course/attend/me', TeacherStudentController.attendme);
+router.post('/course/attend/me/:id/:courseCode', TeacherStudentController.attendme);
 
 
 
 // ----------------GET Requests----------------
-router.get('/course/my/grades', TeacherStudentController.myGrades);
+router.get('/course/my/grades/:id/:courseCode/:gradeType', TeacherStudentController.myGrades);
 
-router.get('/course/my/attendance', TeacherStudentController.viewMyAttendance);
+router.get('/course/my/attendance/:id/:courseCode', TeacherStudentController.viewMyAttendance);
 
 
 

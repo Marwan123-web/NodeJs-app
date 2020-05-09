@@ -23,7 +23,7 @@ class teacherService {
 
     static addTask(courseId, taskType, taskPath) {
         var task = { type: taskType, path: taskPath };
-        return Course.findOne({ courseCode: courseId }).update(
+        return Course.findOne({ courseCode: courseId }).updateOne(
             { courseCode: courseId }, // your query, usually match by _id
             { $push: { tasks: task } }, // item(s) to match from array you want to pull/remove
             { multi: true } // set this to true if you want to remove multiple elements.
@@ -31,7 +31,7 @@ class teacherService {
     }
 
     static deleteTask(courseId, taskname) {
-        return Course.findOne({ courseCode: courseId }).update(
+        return Course.findOne({ courseCode: courseId }).updateOne(
             { courseCode: courseId }, // your query, usually match by _id
             { $pull: { tasks: { type: taskname } } }, // item(s) to match from array you want to pull/remove
             { multi: true } // set this to true if you want to remove multiple elements.
@@ -46,7 +46,7 @@ class teacherService {
 
     static addLecture(courseCode, lectureNumber, lectureLocation, beacon_id) {
         var lecture = { lectureNumber, lectureLocation, beacon_id };
-        return Course.findOne({ courseCode }).update(
+        return Course.findOne({ courseCode }).updateOne(
             { courseCode }, // your query, usually match by _id
             { $push: { lectures: lecture } }, // item(s) to match from array you want to pull/remove
             { multi: true } // set this to true if you want to remove multiple elements.
@@ -54,11 +54,11 @@ class teacherService {
     }
 
     static getCourseStudents(courseCode) {
-        return User.find({ courses: { $in: [courseCode] }, role: 'student' }, { _id: 1 });
+        return User.find({ 'courses.Id': { $in: [courseCode] }, role: 'student' }, { _id: 1 });
 
     }
     static addAttendance(studentId, courseId, lectureNumber, beacon_id) {
-        let newAttendance = new Attendance(studentId, courseId, lectureNumber, beacon_id);
+        const newAttendance = new Attendance({ studentId, courseId, lectureNumber, beacon_id });
         return newAttendance.save();
     }
 
@@ -71,14 +71,15 @@ class teacherService {
 
     // ------------------------------------------------------Student---Service--------------------------------
 
-    static MyGrades(id, courseId) {
-        return Grade.find({ studentId: id, courseId: courseId });
+    static MyGrades(id, courseId,gradeType) {
+        return Grade.find({ studentId: id, courseId: courseId,gradeType });
     }
 
-    static attendme(id, courseId, lectureNumber, beacon_Id) {
-        Attendance.findOne({ studentId: id, courseId, lectureNumber, beacon_Id }).update(
+    static attendme(studentId, courseId, lectureNumber, beacon_id) {
+        return Attendance.findOne({ studentId, courseId, lectureNumber, beacon_id }).updateOne(
             {},
-            { $set: { status: true } }
+            { $set: { status: true } },
+            { multi: true }
         )
     }
     static viewMyAttendance(id, courseId) {

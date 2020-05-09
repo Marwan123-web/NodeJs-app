@@ -92,7 +92,7 @@ class adminService {
     }
 
     static getCourseStudents(courseCode) {
-        return User.find({ courses: { $in: [courseCode] } }, { _id: 1, name: 1, email: 1 });
+        return User.find({ 'courses.Id': { $in: [courseCode] },role:'student' }, { _id: 1, name: 1, email: 1 });
 
     }
 
@@ -101,7 +101,7 @@ class adminService {
     }
     static updateStudentGrade(studentId, courseId, gradeType, score) {
         console.log(studentId, courseId, gradeType, score)
-        return Grade.update(
+        return Grade.updateOne(
             { studentId, courseId, gradeType },
             { $set: { score: '10' } },
             { multi: true }
