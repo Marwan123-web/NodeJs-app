@@ -1,6 +1,7 @@
 const User = require('../models/user');
 const Course = require('../models/course');
 const Grade = require('../models/grade');
+const Attendance = require('../models/attendance');
 
 const teacherService = require('../service/teacher-student');
 
@@ -117,9 +118,17 @@ exports.addLecture = async (req, res, next) => {
         let checkCourseId = await Course.findOne({
             courseCode
         });
+        let checklectureNumber = await Course.findOne({
+            courseCode, 'lectures.lectureNumber': lectureNumber
+        });
         if (!checkCourseId) {
             return res.status(400).json({
                 msg: "course Not Found"
+            });
+        }
+        else if (checklectureNumber) {
+            return res.status(400).json({
+                msg: "This Number Of Lecture Was Added Before"
             });
         }
         else {
@@ -149,17 +158,43 @@ exports.addAttendance = async (req, res, next) => {
         let checkCourseId = await Course.findOne({
             courseCode: courseId
         });
+        let checkAttendance = await Attendance.findOne({
+            courseId, lectureNumber
+        });
+        let checklectureNumber = await Course.findOne({
+            courseCode: courseId, 'lectures.lectureNumber': lectureNumber
+        });
+        let checkbeacon_id = await Course.findOne({
+            courseCode: courseId, 'lectures.lectureNumber': lectureNumber, 'lectures.beacon_id': beacon_id
+        });
         if (!checkCourseId) {
             return res.status(400).json({
                 msg: "course Not Found"
             });
         }
+        if (checkAttendance) {
+            return res.status(400).json({
+                msg: "This Lecture Attendance Was Added Before"
+            });
+        }
+        else if (!checklectureNumber) {
+            return res.status(400).json({
+                msg: "No Lecture With This Number"
+            });
+        }
+        else if (!checkbeacon_id) {
+            return res.status(400).json({
+                msg: "The Beacon ID Is Wrong"
+            });
+        }
         else {
-
             for (var i = 0; i < Students.length; i++) {
                 let stu = Students[i];
                 teacherService.addAttendance(stu._id, courseId, lectureNumber, beacon_id);
             }
+            res.status(200).json({
+                msg: "Lecture Attendance Added Successfuly"
+            });
         }
     } catch (err) {
         console.log(err.message);
@@ -167,18 +202,16 @@ exports.addAttendance = async (req, res, next) => {
     }
 }
 
-// -------------------View Attendance--------------------------
-exports.viewAttendance = async (req, res, next) => {
-    let courseId = req.body.courseId
+// -------------------get Student Total Attendance Attendance--------------------------
+exports.studentTotalAttendance = async (req, res, next) => {
+    let courseId = req.params.courseCode
+    let studentId = req.params.id;
     try {
-        teacherService.viewAttendance(courseId).then((sheet) => {
-            if (sheet) {
-                res.json(sheet);
-            }
-        }).catch(err => {
-            console.log(err);
-            res.status(500).json({ msg: 'Internal Server Error' });
-        });
+        let numberofattendance = await Attendance.find({ courseId, studentId, status: 'true' });
+        if (numberofattendance) {
+            total = { totalattendance: numberofattendance.length }
+            res.json(total);
+        }
     } catch (err) {
         console.log(err.message);
         res.status(500).send("Error in Viewing");
@@ -186,8 +219,27 @@ exports.viewAttendance = async (req, res, next) => {
 
 }
 
+// -------------------View Attendance--------------------------
+exports.viewAttendance = async (req, res, next) => {
+    let courseId = req.params.courseCode;
+    let lectureNumber = req.params.lectureNumber;
+    let studentId = req.params.id;
+    try {
+        teacherService.viewAttendance2(studentId, courseId, lectureNumber).then((attendance) => {
+            if (attendance) {
+                res.json(attendance);
+            }
+        }).catch(err => {
+            console.log(err);
+            res.status(500).json({ msg: 'Internal Server Error' });
+        })
+    }
+    catch (err) {
+        console.log(err.message);
+        res.status(500).send("Error in Viewing");
+    }
 
-
+}
 
 
 
@@ -202,8 +254,8 @@ exports.viewAttendance = async (req, res, next) => {
 exports.myGrades = async (req, res, next) => {
     let id = req.params.id;
     let courseId = req.params.courseCode;
-    let gradeType=req.params.gradeType;
-    teacherService.MyGrades(id, courseId,gradeType).then((Grades) => {
+    let gradeType = req.params.gradeType;
+    teacherService.MyGrades(id, courseId, gradeType).then((Grades) => {
         if (Grades) {
             res.json(Grades);
         }
@@ -218,19 +270,30 @@ exports.myGrades = async (req, res, next) => {
 
 
 exports.attendme = async (req, res, next) => {
-    let id = req.params.id
+    let studentId = req.params.id
     let courseId = req.params.courseCode;
     let lectureNumber = req.body.lectureNumber;
-    let beacon_Id = req.body.beacon_id;
+    let beacon_id = req.body.beacon_id;
     try {
-        teacherService.attendme(id, courseId, lectureNumber, beacon_Id).then((data) => {
-            if (data) {
-                res.json({ msg: 'You Attended successfuly' });
-            }
-            else {
-                res.status(500).json({ msg: "something wrong in your data" });
-            }
+        let checkbeacon_id = await Attendance.findOne({
+            studentId, courseId, lectureNumber, beacon_id
         });
+        if (!checkbeacon_id) {
+            return res.status(400).json({
+                msg: "Lecture Number Or Beacon ID Is Wrong"
+            });
+        }
+        else {
+            teacherService.attendme(studentId, courseId, lectureNumber, beacon_id).then((data) => {
+                if (data) {
+                    res.json({ msg: 'You Attended successfuly' });
+                }
+                else {
+                    res.status(500).json({ msg: "something wrong in your data" });
+                }
+            });
+        }
+
     } catch (err) {
         console.log(err.message);
         res.status(500).send("Error in Viewing");

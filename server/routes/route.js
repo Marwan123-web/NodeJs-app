@@ -32,7 +32,7 @@ router.get('/users', adminController.getAllUsers);
 router.get('/users/:role', adminController.getUserByRole);
 
 
-router.get('/user', adminController.getUser);
+// router.get('/user', adminController.getUser);
 
 router.get('/user/:id/profile', adminController.getUserProfile);
 
@@ -54,11 +54,11 @@ router.get('/course/grades/:courseCode/:gradeType', adminController.getCourseGra
 
 // ----------------PUT Requests----------------
 
-router.put('/update/user', adminController.updateUser);
+router.put('/update/user/:id', adminController.updateUser);
 
-router.put('/update/course', adminController.updateCourse);
+router.put('/update/course/:courseCode', adminController.updateCourse);
 
-router.put('/update/student/grade', adminController.updateGrade);
+router.put('/update/student/grade/:id/:courseCode', adminController.updateGrade);
 
 
 // ----------------DELETE Requests----------------
@@ -90,7 +90,10 @@ router.get('/my/courses/:id', TeacherStudentController.myCourses); //mo4trk m3 s
 
 router.get('/course/tasks', TeacherStudentController.getTasks); //mo4trk m3 student
 
-router.get('/course/attendance/sheet', TeacherStudentController.viewAttendance);
+// router.get('/course/attendance/sheet/:courseCode', TeacherStudentController.viewAttendance);
+router.get('/course/attendance/sheet/:id/:courseCode/:lectureNumber', TeacherStudentController.viewAttendance);
+
+router.get('/course/student/total/attendance/:id/:courseCode', TeacherStudentController.studentTotalAttendance);
 
 
 

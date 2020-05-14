@@ -1,6 +1,8 @@
 const User = require('../models/user');
 const Course = require('../models/course');
 const Grade = require('../models/grade');
+const Attendance = require('../models/attendance');
+
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
@@ -21,10 +23,13 @@ exports.addUser = async (req, res, next) => {
         const checkId = await User.findOne({ _id });
         const checkEmail = await User.findOne({ email });
         if (checkId) {
-            res.json({ msg: 'This ID Has Been Used Before' })
+            res.status(400).json({ msg: 'This ID Has Been Used Before' })
         }
         else if (checkEmail) {
-            res.json({ msg: 'This Email Has Been Used Before' })
+            res.status(400).json({ msg: 'This Email Has Been Used Before' })
+        }
+        else if (password.length < 8) {
+            res.status(400).json({ msg: 'The Password Must Be Grater Than 8 Characters' })
         }
         else {
             const newUser = new User({ _id, name, email, password: hashedPassword, role });
@@ -33,10 +38,8 @@ exports.addUser = async (req, res, next) => {
             });
             newUser.accessToken = accessToken;
             await newUser.save();
-            res.json({
+            res.status(200).json({
                 msg: 'User Added Successfuly',
-                data: newUser,
-
             })
         }
     } catch (error) {
@@ -49,19 +52,30 @@ exports.login = async (req, res, next) => {
     try {
         const { _id, password } = req.body;
         const user = await User.findOne({ _id });
-        // if (!user) return next(new Error('User does not exist'));
-        if (!user) res.json('ID or Password is not correct');
-        const validPassword = await validatePassword(password, user.password);
-        if (!validPassword) res.json('ID or Password is not correct');
-        const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-            expiresIn: "1d"
-        });
-        await User.findByIdAndUpdate(user._id, { accessToken }, { useFindAndModify: false })
-        res.status(200).json({
-            _id: user._id,
-            email: user.email, role: user.role,
-            accessToken
-        })
+        let validPassword;
+        if (user) {
+            const validPassword = await validatePassword(password, user.password);
+            if (!validPassword) {
+                res.status(400).json('ID or Password is not correct');
+            }
+            else {
+                const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+                    expiresIn: "1d"
+                });
+                await User.findByIdAndUpdate(_id, { accessToken }, { useFindAndModify: false })
+                res.status(200).json({
+                    _id: user._id,
+                    email: user.email, role: user.role,
+                    name: user.name,
+                    accessToken
+                });
+            }
+
+        }
+        else if (!user) {
+            res.json('ID or Password is not correct');
+        }
+
     } catch (error) {
         next(error);
     }
@@ -85,7 +99,6 @@ exports.profile = async (req, res, next) => {
 
 // --------------------All Users----------------------
 exports.getAllUsers = async (req, res, next) => {
-    // let role = req.body.role;
     adminService.getAllUsers().then((users) => {
         if (users) {
             res.json(users);
@@ -98,6 +111,8 @@ exports.getAllUsers = async (req, res, next) => {
         res.status(500).json({ msg: 'Internal Server Error' });
     })
 }
+
+// -------------------Users by Role----------------------
 exports.getUserByRole = async (req, res, next) => {
     let role = req.params.role;
     adminService.getUserByRole(role).then((users) => {
@@ -114,37 +129,37 @@ exports.getUserByRole = async (req, res, next) => {
 }
 
 // --------------------get User By Id/Name ----------------------
-exports.getUser = async (req, res, next) => {
-    let id = req.body._id;
-    let name = req.body.name;
-    let role = req.body.role;
-    if (id) {
-        adminService.getUserById(id, role).then((user) => {
-            if (user) {
-                res.json(user);
-            }
-            else {
-                res.status(404).json({ msg: 'User Not Found' });
-            }
-        }).catch(err => {
-            console.log(err);
-            res.status(500).json({ msg: 'Internal Server Error' });
-        })
-    }
-    else {
-        adminService.getUserByName(name, role).then((user) => {
-            if (user) {
-                res.json(user);
-            }
-            else {
-                res.status(404).json({ msg: 'User Not Found' });
-            }
-        }).catch(err => {
-            console.log(err);
-            res.status(500).json({ msg: 'Internal Server Error' });
-        })
-    }
-}
+// exports.getUser = async (req, res, next) => {
+//     let id = req.body._id;
+//     let name = req.body.name;
+//     let role = req.body.role;
+//     if (id) {
+//         adminService.getUserById(id, role).then((user) => {
+//             if (user) {
+//                 res.json(user);
+//             }
+//             else {
+//                 res.status(404).json({ msg: 'User Not Found' });
+//             }
+//         }).catch(err => {
+//             console.log(err);
+//             res.status(500).json({ msg: 'Internal Server Error' });
+//         })
+//     }
+//     else {
+//         adminService.getUserByName(name, role).then((user) => {
+//             if (user) {
+//                 res.json(user);
+//             }
+//             else {
+//                 res.status(404).json({ msg: 'User Not Found' });
+//             }
+//         }).catch(err => {
+//             console.log(err);
+//             res.status(500).json({ msg: 'Internal Server Error' });
+//         })
+//     }
+// }
 
 
 // --------------------get User By Id/Name ----------------------
@@ -165,8 +180,7 @@ exports.getUserProfile = async (req, res, next) => {
 
 // --------------------update User by ID----------------------
 exports.updateUser = async (req, res, next) => {
-    let id = req.body._id;
-    // let role = req.body.role;
+    let id = req.params.id;
     try {
         let checkforUser = await User.findOne({
             _id: id
@@ -189,14 +203,13 @@ exports.updateUser = async (req, res, next) => {
         }
     } catch (err) {
         console.log(err.message);
-        res.status(500).send("Error in Saving");
+        res.status(500).send("Error in Server");
     }
 }
 
 // --------------------Delete User by ID----------------------
 exports.deleteUser = async (req, res, next) => {
     let id = req.params.id;
-    // let role = req.body.role;
     try {
         let checkforUser = await User.findOne({
             _id: id
@@ -207,18 +220,23 @@ exports.deleteUser = async (req, res, next) => {
             });
         }
         else {
-            adminService.deleteUser(id).then((user) => {
-                if (user) {
-                    res.status(201).json({ msg: 'User Deleted Successfuly' });
-                }
-            }).catch(err => {
-                console.log(err);
-                res.status(500).json({ msg: "Internal Server Error" });
-            });
+            let deleteUserGrade = await Grade.deleteMany({ "studentId": id });
+            let deleteUserAttendance = await Attendance.deleteMany({ "studentId": id });
+            if (deleteUserGrade && deleteUserAttendance) {
+                adminService.deleteUser(id).then((user) => {
+                    if (user) {
+                        res.status(201).json({ msg: 'User Deleted Successfuly' });
+                    }
+                }).catch(err => {
+                    console.log(err);
+                    res.status(500).json({ msg: "Internal Server Error" });
+                });
+            }
+
         }
     } catch (err) {
         console.log(err.message);
-        res.status(500).send("Error in Saving");
+        res.status(500).send("Error in Server");
     }
 }
 
@@ -281,6 +299,9 @@ exports.addUserCourse = async (req, res, next) => {
         let checkforUser = await User.findOne({
             _id: id
         });
+        let checkforTheCourse = await Course.findOne({
+            courseCode: courseCode
+        });
         let checkforcourse = await User.findOne({
             _id: id, 'courses.Id': courseCode
         });
@@ -294,11 +315,15 @@ exports.addUserCourse = async (req, res, next) => {
                 msg: "This User Had Register This Course Before"
             });
         }
+        else if (!checkforTheCourse) {
+            return res.status(400).json({
+                msg: "This Course Not Found"
+            });
+        }
         else {
-
             adminService.addUserCourse(id, courseCode).then((course) => {
                 if (course) {
-                    res.json({ msg: 'course is added successfuly' });
+                    res.status(200).json({ msg: 'course is added successfuly' });
                 }
                 else {
                     res.status(500).json({ msg: "Can't Add This Course For This User" });
@@ -320,7 +345,7 @@ exports.deleteUserCourse = async (req, res, next) => {
             _id: id
         });
         let checkforcourse = await User.findOne({
-            _id: id, courses: courseCode
+            _id: id, 'courses.Id': courseCode
         });
         if (!checkforUser) {
             return res.status(400).json({
@@ -332,14 +357,19 @@ exports.deleteUserCourse = async (req, res, next) => {
                 msg: "This User Dont Register This Course"
             });
         } else {
-            adminService.deleteUserCourse(id, courseCode).then((course) => {
-                if (course) {
-                    res.status(201).json({ msg: 'Course Deleted Successfuly from this User' });
-                }
-            }).catch(err => {
-                console.log(err);
-                res.status(500).json({ msg: "Internal Server Error" });
-            });
+            let deleteUserGrades = await Grade.deleteMany({ "studentId": id, "courseId": courseCode });
+            let deleteUserAttendance = await Attendance.deleteMany({ "studentId": id, "courseId": courseCode });
+            if (deleteUserGrades && deleteUserAttendance) {
+                adminService.deleteUserCourse(id, courseCode).then((course) => {
+                    if (course) {
+                        res.status(201).json({ msg: 'Course Deleted Successfuly from this User' });
+                    }
+                }).catch(err => {
+                    console.log(err);
+                    res.status(500).json({ msg: "Internal Server Error" });
+                });
+            }
+
 
         }
     } catch (err) {
@@ -358,18 +388,16 @@ exports.addCourse = async (req, res, next) => {
         const checkCourseId = await Course.findOne({ courseCode });
         const checkCourseName = await Course.findOne({ courseName });
         if (checkCourseId) {
-            res.json({ msg: 'This Course ID Has Been Used Before' })
+            res.status(400).json({ msg: 'This Course ID Has Been Used Before' })
         }
         else if (checkCourseName) {
-            res.json({ msg: 'This Course Name Has Been Used Before' })
+            res.status(400).json({ msg: 'This Course Name Has Been Used Before' })
         }
         else {
             const newCourse = new Course({ courseCode, courseName, courseDepartment, creaditHours });
             await newCourse.save();
-            res.json({
+            res.status(200).json({
                 msg: 'Course Added Successfuly',
-                data: newCourse,
-
             })
         }
     } catch (error) {
@@ -379,7 +407,7 @@ exports.addCourse = async (req, res, next) => {
 
 // --------------------Update Course----------------
 exports.updateCourse = async (req, res, next) => {
-    let code = req.body.courseCode;
+    let code = req.params.courseCode;
     try {
         let checkforcourse = await Course.findOne({
             courseCode: code
@@ -419,14 +447,19 @@ exports.deleteCourse = async (req, res, next) => {
             });
         }
         else {
-            adminService.deleteCourse(code).then((course) => {
-                if (course) {
-                    res.status(201).json({ msg: 'Course Deleted Successfuly' });
-                }
-            }).catch(err => {
-                console.log(err);
-                res.status(500).json({ msg: "Internal Server Error" });
-            });
+            let deleteAllCourseGrades = await Grade.deleteMany({ "courseId": code });
+            let deleteAllCourseAttendance = await Attendance.deleteMany({ "courseId": code });
+            if (deleteAllCourseGrades && deleteAllCourseAttendance) {
+                adminService.deleteCourse(code).then((course) => {
+                    if (course) {
+                        res.status(201).json({ msg: 'Course Deleted Successfuly' });
+                    }
+                }).catch(err => {
+                    console.log(err);
+                    res.status(500).json({ msg: "Internal Server Error" });
+                });
+            }
+
         }
     } catch (err) {
         console.log(err.message);
@@ -506,9 +539,9 @@ exports.getDepartmentCourses = async (req, res, next) => {
 exports.getCourseData = async (req, res, next) => {
     let code = req.params.courseCode;
     try {
-        adminService.getCourseByCode(code).then((user) => {
-            if (user) {
-                res.json(user);
+        adminService.getCourseByCode(code).then((course) => {
+            if (course) {
+                res.json(course);
             }
             else {
                 res.status(404).json({ msg: 'Course Not Found' });
@@ -530,19 +563,25 @@ exports.addCourseGrade = async (req, res, next) => {
     let courseCode = req.params.courseCode;
     let type = req.body.type;
     let grade = req.body.grade;
-    console.log(type);
-    console.log(grade);
     try {
         let checkforcourse = await Course.findOne({ courseCode });
+        let checkforgrade = await Course.findOne({ courseCode, 'grades.type': type });
+
         if (!checkforcourse) {
             return res.status(400).json({
                 msg: "Course Not Found"
             });
         }
+
+        else if (checkforgrade) {
+            return res.status(400).json({
+                msg: "This Grade Was Added Before "
+            });
+        }
         else {
             adminService.addCourseGrades(courseCode, type, grade).then((garde) => {
                 if (garde) {
-                    res.json(garde);
+                    res.status(200).json({ msg: "Grade Added Successfuly" });
                 }
                 else {
                     res.status(500).json({ msg: "Can't Add This Grade For This Course" });
@@ -561,20 +600,31 @@ exports.deleteCourseGrade = async (req, res, next) => {
     let type = req.params.type;
     try {
         let checkforcourse = await Course.findOne({ courseCode });
+        let checkforgrade = await Course.findOne({ courseCode, 'grades.type': type });
+
         if (!checkforcourse) {
             return res.status(400).json({
                 msg: "Course Not Found"
             });
         }
-        else {
-            adminService.deleteCourseGrade(courseCode, type).then((garde) => {
-                if (garde) {
-                    res.json(garde);
-                }
-                else {
-                    res.status(500).json({ msg: "Can't Delete This Grade Form This Course" });
-                }
+        else if (!checkforgrade) {
+            return res.status(400).json({
+                msg: "This Grade Not Added Before "
             });
+        }
+        else {
+            let deleteAllGradeOfThisType = await Grade.deleteMany({ "courseId": courseCode, "gradeType": type });
+            if (deleteAllGradeOfThisType) {
+                adminService.deleteCourseGrade(courseCode, type).then((garde) => {
+                    if (garde) {
+                        res.status(200).json({ msg: "Grade Deleted Successfuly" });
+                    }
+                    else {
+                        res.status(500).json({ msg: "Can't Delete This Grade Form This Course" });
+                    }
+                });
+            }
+
         }
     } catch (err) {
         console.log(err.message);
@@ -606,9 +656,10 @@ exports.getCourseStudents = async (req, res, next) => {
 exports.addGrade = async (req, res, next) => {
     const { studentId, gradeType, score } = req.body
     let courseId = req.params.courseCode;
-    console.log(req.body)
+
     try {
         let checkForStudent = await User.findOne({ _id: studentId });
+        let checkForStudentCourse = await User.findOne({ _id: studentId, 'courses.Id': courseId });
         let checkStudentGrade = await Grade.findOne({
             studentId, courseId, gradeType
         });
@@ -623,12 +674,16 @@ exports.addGrade = async (req, res, next) => {
                 msg: "Grade Already Exists"
             });
         }
+        else if (!checkForStudentCourse) {
+            return res.status(400).json({
+                msg: "This Student Didn't Register This Course"
+            });
+        }
         else {
             const newGrade = new Grade({ studentId, courseId, gradeType, score });
             await newGrade.save();
-            res.json({
+            res.status(200).json({
                 msg: 'Grade Added Successfuly',
-                data: newGrade
             })
         }
 
@@ -639,7 +694,10 @@ exports.addGrade = async (req, res, next) => {
 
 // --------------------Update Grade----------------------
 exports.updateGrade = async (req, res, next) => {
-    const { studentId, courseId, gradeType, score } = req.body
+    const { gradeType, score } = req.body
+    let studentId = req.params.id;
+    let courseId = req.params.courseCode;
+
 
     try {
         let checkStudentId = await Grade.find({
@@ -658,10 +716,8 @@ exports.updateGrade = async (req, res, next) => {
             });
         }
         else {
-
             adminService.updateStudentGrade(studentId, courseId, gradeType, score).then((grade) => {
                 if (grade) {
-                    console.log(grade)
                     res.status(201).json({ msg: "Student's Grade Updated Successfuly" });
                 }
                 else {
@@ -671,17 +727,7 @@ exports.updateGrade = async (req, res, next) => {
                 console.log(err);
                 res.status(500).json({ msg: 'Internal Server Error' });
             })
-            // Grade.findOneAndUpdate({ studentId: studentId, courseId: courseId, gradeType: gradeType },
-            //     { $set: { score: score } },
-            //     { useFindAndModify: false },
-            //     (err) => {
-            //         if (err) {
-            //             console.log(err)
-            //             res.status(404).json({ msg: "Can't Update this Student's Grade Information" });
-            //         }
-            //         console.log('done')
-            //         res.status(201).json({ msg: "Student's Grade Updated Successfuly" });
-            //     });
+
         }
     } catch (err) {
         console.log(err.message);
@@ -740,7 +786,6 @@ exports.getCourseGradeType = async (req, res, next) => {
         else {
             adminService.getCourseGradeType(code, gradeType).then((grades) => {
                 if (grades) {
-                    // data=grades.type==gradeType;
                     res.json(grades);
                 }
                 else {

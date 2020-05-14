@@ -1,6 +1,7 @@
 const User = require('../models/user');
 const Course = require('../models/course');
 const Grade = require('../models/grade');
+const Attendance = require('../models/attendance');
 
 // const attendanceModel = require('../module/attendance');
 
@@ -9,7 +10,7 @@ class adminService {
 
     // ------------------------Student Services ----------------------------------------
     static getUserData(id) {
-        return User.findOne({ _id: id });
+        return User.findOne({ _id: id }, { password: 0, accessToken: 0 });
     }
 
     static getAllUsers() {
@@ -35,7 +36,7 @@ class adminService {
     }
 
     static addUserCourse(id, courseCode) {
-        var course = { Id: courseCode};
+        var course = { Id: courseCode };
         return User.findOne({ _id: id }).updateOne(
             {}, // your query, usually match by _id
             { $push: { courses: course } }, // item(s) to match from array you want to pull/remove
@@ -44,9 +45,10 @@ class adminService {
     }
 
     static deleteUserCourse(UserId, courseCode) {
+        var course = { Id: courseCode };
         return User.findOne({ _id: UserId }).updateOne(
-            { courses: courseCode }, // your query, usually match by _id
-            { $pull: { courses: { $in: [courseCode] } } }, // item(s) to match from array you want to pull/remove
+            {}, // your query, usually match by _id
+            { $pull: { courses: course } }, // item(s) to match from array you want to pull/remove
             { multi: true } // set this to true if you want to remove multiple elements.
         )
     }
@@ -68,6 +70,11 @@ class adminService {
     }
 
     static deleteCourse(code) {
+        User.find().updateMany(
+            { 'courses.Id': code }, // your query, usually match by _id
+            { $pull: { 'courses.Id': { $in: [code] } } }, // item(s) to match from array you want to pull/remove
+            { multi: true } // set this to true if you want to remove multiple elements.
+        )
         return Course.findOneAndDelete({ courseCode: code });
     }
 
@@ -92,7 +99,7 @@ class adminService {
     }
 
     static getCourseStudents(courseCode) {
-        return User.find({ 'courses.Id': { $in: [courseCode] },role:'student' }, { _id: 1, name: 1, email: 1 });
+        return User.find({ 'courses.Id': { $in: [courseCode] }, role: 'student' }, { _id: 1, name: 1, email: 1 });
 
     }
 
@@ -100,10 +107,9 @@ class adminService {
         return Grade.find({ courseId: courseCode, gradeType: gradeType });
     }
     static updateStudentGrade(studentId, courseId, gradeType, score) {
-        console.log(studentId, courseId, gradeType, score)
         return Grade.updateOne(
             { studentId, courseId, gradeType },
-            { $set: { score: '10' } },
+            { $set: { score: score } },
             { multi: true }
         )
     }

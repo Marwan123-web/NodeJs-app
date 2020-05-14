@@ -62,17 +62,19 @@ class teacherService {
         return newAttendance.save();
     }
 
-    static viewAttendance(courseId) {
-        return Attendance.find({ courseId });
+    static viewAttendance(studentId, courseId) {
+        return Attendance.find({ studentId, courseId });
     }
-
+    static viewAttendance2(studentId, courseId, lectureNumber) {
+        return Attendance.findOne({ studentId, courseId, lectureNumber });
+    }
 
 
 
     // ------------------------------------------------------Student---Service--------------------------------
 
-    static MyGrades(id, courseId,gradeType) {
-        return Grade.find({ studentId: id, courseId: courseId,gradeType });
+    static MyGrades(id, courseId, gradeType) {
+        return Grade.find({ studentId: id, courseId: courseId, gradeType });
     }
 
     static attendme(studentId, courseId, lectureNumber, beacon_id) {
