@@ -62,14 +62,30 @@ class teacherService {
         return newAttendance.save();
     }
 
-    static viewAttendance(studentId, courseId) {
-        return Attendance.find({ studentId, courseId });
-    }
-    static viewAttendance2(studentId, courseId, lectureNumber) {
-        return Attendance.findOne({ studentId, courseId, lectureNumber });
-    }
+    // static viewAttendance(studentId, courseId) {
+    //     return Attendance.find({ studentId, courseId });
+    // }
+    static async viewAttendance(studentId, courseId, lectureNumber) {
+        let fakedata = { "_id": "5eba5bb7900576e5c44f34b2", "studentId": studentId, "courseId": courseId, "lectureNumber": lectureNumber, "status": "no attendance", "__v": 0 }
 
-
+        let checkforattendance = await Attendance.findOne({ studentId, courseId, lectureNumber });
+        if (checkforattendance) {
+            return checkforattendance;
+        }
+        else if (checkforattendance == null) {
+            return fakedata;
+        }
+    }
+    static async viewGrades(studentId, courseId, gradeType) {
+        let fakedata = { "_id": "5eba5bb7900576e5c44f34b2", "studentId": studentId, "courseId": courseId, "gradeType": gradeType, "score": "no grade", "__v": 0 }
+        let checkforgarde = await Grade.findOne({ studentId, courseId, gradeType });
+        if (checkforgarde) {
+            return checkforgarde;
+        }
+        else if (checkforgarde == null) {
+            return fakedata;
+        }
+    }
 
     // ------------------------------------------------------Student---Service--------------------------------
 

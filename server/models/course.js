@@ -10,7 +10,7 @@ const courseSchema = mongoose.Schema({
     grades: [
         {
             type: { type: String },
-            grade: { type: String }
+            grade: { type: Number }
         }
     ],
 

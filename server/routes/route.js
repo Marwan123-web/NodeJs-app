@@ -96,6 +96,12 @@ router.get('/course/attendance/sheet/:id/:courseCode/:lectureNumber', TeacherStu
 router.get('/course/student/total/attendance/:id/:courseCode', TeacherStudentController.studentTotalAttendance);
 
 
+router.get('/course/grade/sheet/:id/:courseCode/:gradeType', TeacherStudentController.viewGrades);
+
+router.get('/course/student/total/grade/:id/:courseCode', TeacherStudentController.studentTotalGrades);
+
+router.get('/course/total/grades/:courseCode', TeacherStudentController.totalCourseGrades);
+
 
 // ----------------DELETE Requests----------------
 

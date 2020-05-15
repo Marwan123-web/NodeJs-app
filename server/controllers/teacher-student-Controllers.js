@@ -208,9 +208,10 @@ exports.studentTotalAttendance = async (req, res, next) => {
     let studentId = req.params.id;
     try {
         let numberofattendance = await Attendance.find({ courseId, studentId, status: 'true' });
+        let userdata = await User.findOne({ _id: studentId }, { password: 0, accessToken: 0 });
         if (numberofattendance) {
-            total = { totalattendance: numberofattendance.length }
-            res.json(total);
+            total = { totalattendance: numberofattendance.length };
+            res.json({ user: userdata, totalattendance: total });
         }
     } catch (err) {
         console.log(err.message);
@@ -225,7 +226,7 @@ exports.viewAttendance = async (req, res, next) => {
     let lectureNumber = req.params.lectureNumber;
     let studentId = req.params.id;
     try {
-        teacherService.viewAttendance2(studentId, courseId, lectureNumber).then((attendance) => {
+        teacherService.viewAttendance(studentId, courseId, lectureNumber).then((attendance) => {
             if (attendance) {
                 res.json(attendance);
             }
@@ -241,7 +242,63 @@ exports.viewAttendance = async (req, res, next) => {
 
 }
 
+exports.viewGrades = async (req, res, next) => {
+    let courseId = req.params.courseCode;
+    let gradeType = req.params.gradeType;
+    let studentId = req.params.id;
+    try {
+        teacherService.viewGrades(studentId, courseId, gradeType).then((grade) => {
+            if (grade) {
+                res.json(grade);
+            }
+        }).catch(err => {
+            console.log(err);
+            res.status(500).json({ msg: 'Internal Server Error' });
+        })
+    }
+    catch (err) {
+        console.log(err.message);
+        res.status(500).send("Error in Viewing");
+    }
 
+}
+exports.studentTotalGrades = async (req, res, next) => {
+    let courseId = req.params.courseCode
+    let studentId = req.params.id;
+    try {
+        let totalGrades = await Grade.find({ courseId, studentId });
+        let userdata = await User.findOne({ _id: studentId }, { password: 0, accessToken: 0 });
+        if (totalGrades) {
+            let totalg = 0;
+            for (let i = 0; i < totalGrades.length; i++) {
+                totalg = totalg + totalGrades[i].score;
+            }
+            total = { totalGrades: totalg };
+            res.json({ user: userdata, totalGrades: total });
+        }
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).send("Error in Viewing");
+    }
+
+}
+exports.totalCourseGrades = async (req, res, next) => {
+    let courseCode = req.params.courseCode;
+    try {
+        let totalGrades = await Course.findOne({ courseCode });
+        if (totalGrades) {
+            let totalg = 0;
+            for (let i = 0; i < totalGrades.grades.length; i++) {
+                totalg = totalg + totalGrades.grades[i].grade;
+            }
+            total = { totalGrades: totalg };
+            res.json(total );
+        }
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).send("Error in Viewing");
+    }
+}
 
 
 
