@@ -51,8 +51,7 @@ exports.addUser = async (req, res, next) => {
 exports.login = async (req, res, next) => {
     try {
         const { _id, password } = req.body;
-        const user = await User.findOne({ _id });
-        let validPassword;
+        let user = await User.findOne({ _id });
         if (user) {
             const validPassword = await validatePassword(password, user.password);
             if (!validPassword) {
@@ -73,7 +72,7 @@ exports.login = async (req, res, next) => {
 
         }
         else if (!user) {
-            res.json('ID or Password is not correct');
+            res.status(400).json('ID or Password is not correct');
         }
 
     } catch (error) {
@@ -613,7 +612,7 @@ exports.deleteCourseGrade = async (req, res, next) => {
             });
         }
         else {
-            let deleteAllGradeOfThisType = await Grade.deleteMany({ "courseId": courseCode, "gradeType": type });
+            let deleteAllGradeOfThisType = await Grade.deleteMany({ courseId: courseCode, gradeType: type });
             if (deleteAllGradeOfThisType) {
                 adminService.deleteCourseGrade(courseCode, type).then((garde) => {
                     if (garde) {
