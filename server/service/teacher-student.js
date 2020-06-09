@@ -89,8 +89,15 @@ class teacherService {
 
     // ------------------------------------------------------Student---Service--------------------------------
 
-    static MyGrades(id, courseId, gradeType) {
-        return Grade.find({ studentId: id, courseId: courseId, gradeType });
+    static async MyGrades(studentId, courseId, gradeType) {
+        let fakedata = { "_id": "5eba5bb7900576e5c44f34b2", "studentId": studentId, "courseId": courseId, "gradeType": gradeType, "score": "no grade", "__v": 0 }
+        let checkforgarde = await Grade.findOne({ studentId, courseId, gradeType });
+        if (checkforgarde) {
+            return checkforgarde;
+        }
+        else if (checkforgarde == null) {
+            return fakedata;
+        }
     }
 
     static attendme(studentId, courseId, lectureNumber, beacon_id) {
@@ -105,7 +112,9 @@ class teacherService {
     }
 
 
-
+    // static getlectureattendancetrue(courseId, lectureNumber) {
+    //     return Attendance.find({ courseId, lectureNumber, status: "true" })
+    // }
 
 
 

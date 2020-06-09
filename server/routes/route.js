@@ -129,6 +129,9 @@ router.get('/course/my/attendance/:id/:courseCode', TeacherStudentController.vie
 
 
 
+router.get('/course/attendance/report/:courseCode', TeacherStudentController.viewAttendanceReport);
+
+router.get('/course/grades-report/:courseCode', TeacherStudentController.GradesReport);
 
 
 

@@ -292,7 +292,7 @@ exports.totalCourseGrades = async (req, res, next) => {
                 totalg = totalg + totalGrades.grades[i].grade;
             }
             total = { totalGrades: totalg };
-            res.json(total );
+            res.json(total);
         }
     } catch (err) {
         console.log(err.message);
@@ -371,6 +371,160 @@ exports.viewMyAttendance = async (req, res, next) => {
             res.status(500).json({ msg: 'Internal Server Error' });
         });
     } catch (err) {
+        console.log(err.message);
+        res.status(500).send("Error in Viewing");
+    }
+
+}
+
+
+exports.viewAttendanceReport = async (req, res, next) => {
+    let courseId = req.params.courseCode;
+    try {
+        let getCourseLectures = await Course.findOne({ courseCode: courseId }, { "lectures.lectureNumber": 1, _id: 0 });
+        if (getCourseLectures) {
+
+            let courselectures = getCourseLectures.lectures;
+            let arrayoflectures = [];
+            for (let i = 0; i < courselectures.length; i++) {
+                arrayoflectures[i] = courselectures[i].lectureNumber;
+            }
+            let arrayofattendance = [];
+            for (let y = 0; y < arrayoflectures.length; y++) {
+                arrayofattendance[y] = await Attendance.find({ courseId, lectureNumber: arrayoflectures[y] });
+            }
+            let arrayoftrueattendance = [];
+            for (let y = 0; y < arrayoflectures.length; y++) {
+                arrayoftrueattendance[y] = await Attendance.find({ courseId, lectureNumber: arrayoflectures[y], status: true });
+            }
+            let arrayoffalseattendance = [];
+            for (let y = 0; y < arrayoflectures.length; y++) {
+                arrayoffalseattendance[y] = await Attendance.find({ courseId, lectureNumber: arrayoflectures[y], status: false });
+            }
+
+            let arrayofreport = [];
+
+            for (let z = 0; z < arrayoflectures.length; z++) {
+                let lectureNumber = arrayoflectures[z];
+
+                let attendance = arrayofattendance[z];
+                let numberOfAttendance = attendance.length;
+
+                let trueAttendance = arrayoftrueattendance[z];
+                let numberOfTrueAttendance = trueAttendance.length;
+
+                let FalseAttendance = arrayoffalseattendance[z];
+                let numberOfFalseAttendance = FalseAttendance.length;
+
+                arrayofreport[z] = { lectureNumber, numberOfAttendance, numberOfTrueAttendance, numberOfFalseAttendance }
+            }
+
+            return res.status(200).json(
+                arrayofreport
+            );
+        }
+
+        // teacherService.viewAttendanceReport(studentId, courseId, lectureNumber).then((attendance) => {
+        //     if (attendance) {
+        //         res.json(attendance);
+        //     }
+        // }).catch(err => {
+        //     console.log(err);
+        //     res.status(500).json({ msg: 'Internal Server Error' });
+        // })
+    }
+    catch (err) {
+        console.log(err.message);
+        res.status(500).send("Error in Viewing");
+    }
+
+}
+
+
+
+exports.GradesReport = async (req, res, next) => {
+    let courseId = req.params.courseCode;
+
+    try {
+        let getCourseGrades = await Course.findOne({ courseCode: courseId }, { "grades.type": 1, "grades.grade": 1, _id: 0 });
+        if (getCourseGrades) {
+
+            let courseGrades = getCourseGrades.grades;
+            let arrayofGrades = [];
+            for (let i = 0; i < courseGrades.length; i++) {
+                arrayofGrades[i] = [courseGrades[i].type, courseGrades[i].grade];
+            }
+            let arrayofStudentsGades = [];
+            for (let y = 0; y < arrayofGrades.length; y++) {
+                arrayofStudentsGades[y] = await Grade.find({ courseId, gradeType: arrayofGrades[y][0] });
+            }
+
+            let arrayOfGradesUnder50Percent = [];
+            for (let y = 0; y < arrayofGrades.length; y++) {
+                let Percent_50 = (arrayofGrades[y][1] * 50) / 100;
+                arrayOfGradesUnder50Percent[y] = await Grade.find({ courseId, gradeType: arrayofGrades[y][0], score: { $lt: Percent_50 } });
+            }
+
+            let arrayOfGradesUnder65Percent = [];
+            for (let y = 0; y < arrayofGrades.length; y++) {
+                let Percent_50 = (arrayofGrades[y][1] * 50) / 100;
+                let Percent_65 = (arrayofGrades[y][1] * 65) / 100;
+                arrayOfGradesUnder65Percent[y] = await Grade.find({ courseId, gradeType: arrayofGrades[y][0], score: { $lt: Percent_65, $gte: Percent_50 } });
+            }
+
+            let arrayOfGradesUnder75Percent = [];
+            for (let y = 0; y < arrayofGrades.length; y++) {
+                let Percent_65 = (arrayofGrades[y][1] * 65) / 100;
+                let Percent_75 = (arrayofGrades[y][1] * 75) / 100;
+                arrayOfGradesUnder75Percent[y] = await Grade.find({ courseId, gradeType: arrayofGrades[y][0], score: { $lt: Percent_75, $gte: Percent_65 } });
+            }
+
+            let arrayOfGradesUnder85Percent = [];
+            for (let y = 0; y < arrayofGrades.length; y++) {
+                let Percent_85 = (arrayofGrades[y][1] * 85) / 100;
+                let Percent_75 = (arrayofGrades[y][1] * 75) / 100;
+                arrayOfGradesUnder85Percent[y] = await Grade.find({ courseId, gradeType: arrayofGrades[y][0], score: { $lt: Percent_85, $gte: Percent_75 } });
+            }
+
+            let arrayOfGradesAbove85Percent = [];
+            for (let y = 0; y < arrayofGrades.length; y++) {
+                let Percent_85 = (arrayofGrades[y][1] * 85) / 100;
+                arrayOfGradesAbove85Percent[y] = await Grade.find({ courseId, gradeType: arrayofGrades[y][0], score: { $gte: Percent_85 } });
+            }
+
+            let arrayofGradesreport = [];
+            for (let z = 0; z < arrayofGrades.length; z++) {
+                let GradeType = arrayofGrades[z][0];
+                let GradeGrade = arrayofGrades[z][1];
+
+
+                let Student = arrayofStudentsGades[z];
+                let numberOfStudent = Student.length;
+
+                let gradesUnder50 = arrayOfGradesUnder50Percent[z];
+                let numberOfGradesUnder50 = gradesUnder50.length;
+
+                let gradesUnder65 = arrayOfGradesUnder65Percent[z];
+                let numberOfGradesUnder65 = gradesUnder65.length;
+
+                let gradesUnder75 = arrayOfGradesUnder75Percent[z];
+                let numberOfGradesUnder75 = gradesUnder75.length;
+
+                let gradesUnder85 = arrayOfGradesUnder85Percent[z];
+                let numberOfGradesUnder85 = gradesUnder85.length;
+
+                let gradesAbove85 = arrayOfGradesAbove85Percent[z];
+                let numberOfGradesAbove85 = gradesAbove85.length;
+
+                arrayofGradesreport[z] = { GradeType, GradeGrade, numberOfStudent, numberOfGradesUnder50, numberOfGradesUnder65, numberOfGradesUnder75, numberOfGradesUnder85, numberOfGradesAbove85 };
+            }
+
+            return res.status(200).json(
+                arrayofGradesreport
+            );
+        }
+    }
+    catch (err) {
         console.log(err.message);
         res.status(500).send("Error in Viewing");
     }
