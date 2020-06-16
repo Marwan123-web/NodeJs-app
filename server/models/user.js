@@ -5,10 +5,14 @@ const userSchema = mongoose.Schema({
     name: { type: String, required: 'Please Enter Student Name' },
     email: { type: String, required: 'Please Enter Student Email' },
     password: { type: String, required: 'Please Enter Student Password', min: 8 },
-    created_at: { type: Date, default: Date.now() },
+    dataOfJoin: { type: String },
     accessToken: { type: String },
     courses: [
-        { Id: { type: String } }
+        {
+            Id: { type: String },
+            status: { type: String, default: 'new', enum: ["new", "pass", "fail", "postponed"] },
+            semester_time: { type: String },
+        }
     ]
 });
 

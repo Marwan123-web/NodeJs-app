@@ -18,7 +18,7 @@ async function validatePassword(plainPassword, hashedPassword) {
 // ---------------------ADD User----------------------
 exports.addUser = async (req, res, next) => {
     try {
-        const { _id, name, email, password, role } = req.body
+        const { _id, name, email, password, role, dataOfJoin } = req.body
         const hashedPassword = await hashPassword(password);
         const checkId = await User.findOne({ _id });
         const checkEmail = await User.findOne({ email });
@@ -32,7 +32,7 @@ exports.addUser = async (req, res, next) => {
             res.status(400).json({ msg: 'The Password Must Be Grater Than 8 Characters' })
         }
         else {
-            const newUser = new User({ _id, name, email, password: hashedPassword, role });
+            const newUser = new User({ _id, name, email, password: hashedPassword, role, dataOfJoin });
             const accessToken = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
                 expiresIn: "1d"
             });
@@ -270,18 +270,25 @@ exports.deleteUser = async (req, res, next) => {
 //         res.status(500).send("Error in Saving");
 //     }
 // }
-exports.UserCourses = async (req, res, next) => {
+exports.UserCourses = async (req, res, next) => {//ana hna 
     let id = req.params.id;
     try {
         let usercourses = [];
-        usercourses = await User.findOne({ _id: id }, { 'courses.Id': 1, _id: 0 })
+        usercourses = await User.findOne({ _id: id }, { _id: 0 })
         let data = usercourses.courses;
         if (data) {
-            let courseInfo = [];
-            for (let i = 0; i < data.length; i++) {
-                courseInfo[i] = await adminService.getCourseByCode(data[i].Id)
-            }
-            res.json(courseInfo)
+            //     let courseInfo = [];
+            //     for (let i = 0; i < data.length; i++) {
+            //         courseInfo[i] = await adminService.getCourseByCode(data[i].Id)
+            //     }
+            //     let arr = []
+            //     for (let i = 0; i < data.length; i++) {
+            //         let x = Object.assign(courseInfo[i], data[i]);
+            //         // let x = courseInfo[i] + data[i]
+            //         arr[i] = [x]
+            //     }
+            //     // usercourses = { courseInfo, data };
+            res.json(data)
 
         }
     } catch (err) {
@@ -302,7 +309,7 @@ exports.addUserCourse = async (req, res, next) => {
             courseCode: courseCode
         });
         let checkforcourse = await User.findOne({
-            _id: id, 'courses.Id': courseCode
+            _id: id, 'courses.Id': courseCode,
         });
         if (!checkforUser) {
             return res.status(400).json({
@@ -403,6 +410,55 @@ exports.addCourse = async (req, res, next) => {
         next(error)
     }
 }
+exports.addCourseSemester = async (req, res, next) => {
+    let courseCode = req.params.courseCode;
+    let semester_time = req.body.semester_time;
+
+    try {
+        let checkforcourse = await Course.findOne({ courseCode });
+        let checkforsemester = await Course.findOne({ courseCode, 'semesters.semester_time': semester_time });
+
+        if (!checkforcourse) {
+            return res.status(400).json({
+                msg: "Course Not Found"
+            });
+        }
+
+        else if (checkforsemester) {
+            return res.status(400).json({
+                msg: "This Semester Was Added Before "
+            });
+        }
+        else {
+            adminService.addCourseSemester(courseCode, semester_time).then((garde) => {
+                if (garde) {
+                    res.status(200).json({ msg: "Semester Added Successfuly" });
+                }
+                else {
+                    res.status(500).json({ msg: "Can't Add This Semester For This Course" });
+                }
+            });
+        }
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).send("Error in Saving");
+    }
+}
+
+
+
+exports.getCourseSemesterData = async (req, res, next) => {
+    let courseCode = req.params.courseCode;
+    let semester_time = req.params.semester;
+    try {
+        let findsemesterdata = await Course.findOne({ courseCode }, { _id: 0, courseCode: 1, courseName: 1, semesters: { $elemMatch: { semester_time: semester_time } } })
+        res.json(findsemesterdata);
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).send("Error in updating");
+    }
+}
+
 
 // --------------------Update Course----------------
 exports.updateCourse = async (req, res, next) => {
@@ -558,17 +614,25 @@ exports.getCourseData = async (req, res, next) => {
 }
 
 // --------------------Add Course Grades----------------------
-exports.addCourseGrade = async (req, res, next) => {
+exports.addCourseSemesterGrade = async (req, res, next) => {
     let courseCode = req.params.courseCode;
+    let semester_time = req.params.semester;
     let type = req.body.type;
     let grade = req.body.grade;
+
     try {
         let checkforcourse = await Course.findOne({ courseCode });
-        let checkforgrade = await Course.findOne({ courseCode, 'grades.type': type });
-
+        let checkforcoursesemester = await Course.findOne({ courseCode }, { semesters: { $elemMatch: { semester_time: semester_time } } });
+        let checkforgradearr = checkforcoursesemester.semesters[0].grades;
+        const checkforgrade = checkforgradearr.find(element => element.type === type);
         if (!checkforcourse) {
             return res.status(400).json({
                 msg: "Course Not Found"
+            });
+        }
+        else if (checkforcoursesemester.semesters.length == 0) {
+            return res.status(400).json({
+                msg: "Semester Not Found"
             });
         }
 
@@ -578,7 +642,7 @@ exports.addCourseGrade = async (req, res, next) => {
             });
         }
         else {
-            adminService.addCourseGrades(courseCode, type, grade).then((garde) => {
+            adminService.addCourseSemesterGrades(courseCode, semester_time, type, grade).then((garde) => {
                 if (garde) {
                     res.status(200).json({ msg: "Grade Added Successfuly" });
                 }
@@ -594,16 +658,23 @@ exports.addCourseGrade = async (req, res, next) => {
 }
 
 // --------------------Delete Course Grade----------------------
-exports.deleteCourseGrade = async (req, res, next) => {
+exports.deleteCourseSemesterGrade = async (req, res, next) => {
     let courseCode = req.params.courseCode;
+    let semester_time = req.params.semester;
     let type = req.params.type;
     try {
         let checkforcourse = await Course.findOne({ courseCode });
-        let checkforgrade = await Course.findOne({ courseCode, 'grades.type': type });
-
+        let checkforcoursesemester = await Course.findOne({ courseCode }, { semesters: { $elemMatch: { semester_time: semester_time } } });
+        let checkforgradearr = checkforcoursesemester.semesters[0].grades;
+        const checkforgrade = checkforgradearr.find(element => element.type === type);
         if (!checkforcourse) {
             return res.status(400).json({
                 msg: "Course Not Found"
+            });
+        }
+        else if (checkforcoursesemester.semesters.length == 0) {
+            return res.status(400).json({
+                msg: "Semester Not Found"
             });
         }
         else if (!checkforgrade) {
@@ -612,9 +683,9 @@ exports.deleteCourseGrade = async (req, res, next) => {
             });
         }
         else {
-            let deleteAllGradeOfThisType = await Grade.deleteMany({ courseId: courseCode, gradeType: type });
+            let deleteAllGradeOfThisType = await Grade.deleteMany({ courseId: courseCode, semester_time, gradeType: type });
             if (deleteAllGradeOfThisType) {
-                adminService.deleteCourseGrade(courseCode, type).then((garde) => {
+                adminService.deleteCourseSemesterGrade(courseCode, semester_time, type).then((garde) => {
                     if (garde) {
                         res.status(200).json({ msg: "Grade Deleted Successfuly" });
                     }
@@ -636,8 +707,9 @@ exports.deleteCourseGrade = async (req, res, next) => {
 // --------------------Get Users In Course----------------------
 exports.getCourseStudents = async (req, res, next) => {
     let code = req.params.courseCode;
+    let semester_time = req.params.semester;
     try {
-        adminService.getCourseStudents(code).then((users) => {
+        adminService.getCourseStudents(code, semester_time).then((users) => {
             if (users) {
                 res.json(users);
             }
@@ -652,15 +724,15 @@ exports.getCourseStudents = async (req, res, next) => {
 }
 
 // --------------------Add Grade----------------------
-exports.addGrade = async (req, res, next) => {
+exports.addSemesterGrade = async (req, res, next) => {
     const { studentId, gradeType, score } = req.body
     let courseId = req.params.courseCode;
-
+    let semester_time = req.params.semester;
     try {
         let checkForStudent = await User.findOne({ _id: studentId });
-        let checkForStudentCourse = await User.findOne({ _id: studentId, 'courses.Id': courseId });
+        let checkForStudentCourse = await User.findOne({ _id: studentId, 'courses.Id': courseId, 'courses.semester_time': semester_time });
         let checkStudentGrade = await Grade.findOne({
-            studentId, courseId, gradeType
+            studentId, courseId, gradeType, semester_time
         });
 
         if (!checkForStudent) {
@@ -679,7 +751,7 @@ exports.addGrade = async (req, res, next) => {
             });
         }
         else {
-            const newGrade = new Grade({ studentId, courseId, gradeType, score });
+            const newGrade = new Grade({ studentId, courseId, semester_time, gradeType, score });
             await newGrade.save();
             res.status(200).json({
                 msg: 'Grade Added Successfuly',
@@ -692,11 +764,11 @@ exports.addGrade = async (req, res, next) => {
 }
 
 // --------------------Update Grade----------------------
-exports.updateGrade = async (req, res, next) => {
+exports.updateSemesterGrade = async (req, res, next) => {
     const { gradeType, score } = req.body
     let studentId = req.params.id;
     let courseId = req.params.courseCode;
-
+    let semester_time = req.params.semester;
 
     try {
         let checkStudentId = await Grade.find({
@@ -705,8 +777,8 @@ exports.updateGrade = async (req, res, next) => {
         let checkCourseId = await Grade.find({
             courseId
         });
-        let checkGradeType = await Grade.find({
-            gradeType, studentId, courseId
+        let checkGradeType = await Grade.findOne({
+            gradeType, studentId, courseId, semester_time
         });
 
         if (!checkCourseId || !checkStudentId || !checkGradeType) {
@@ -715,7 +787,7 @@ exports.updateGrade = async (req, res, next) => {
             });
         }
         else {
-            adminService.updateStudentGrade(studentId, courseId, gradeType, score).then((grade) => {
+            adminService.updateStudentGrade(studentId, courseId, semester_time, gradeType, score).then((grade) => {
                 if (grade) {
                     res.status(201).json({ msg: "Student's Grade Updated Successfuly" });
                 }

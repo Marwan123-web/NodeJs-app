@@ -5,6 +5,7 @@ const attendanceSchema = mongoose.Schema({
         required: 'Please Enter students ID'
     },
     courseId: { type: String, required: 'Please Enter course ID' },
+    semester_time: { type: String },
     lectureNumber: { type: Number, required: 'Please Enter Lecture Number' },
     Date: { type: Date, default: Date.now() },
     status: { type: Boolean, default: false },

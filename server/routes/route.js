@@ -20,9 +20,12 @@ router.post('/add/user/course/:id', adminController.addUserCourse);
 
 router.post('/add/course', adminController.addCourse);
 
-router.post('/add/course/grade/:courseCode', adminController.addCourseGrade);
+router.post('/add/course/semester/:courseCode', adminController.addCourseSemester);
 
-router.post('/add/student/grade/:courseCode', adminController.addGrade); //mo4trk m3 teacher
+
+router.post('/add/course/semester/grade/:courseCode/:semester', adminController.addCourseSemesterGrade);
+
+router.post('/add/course/semester/student/grade/:courseCode/:semester', adminController.addSemesterGrade); //mo4trk m3 teacher
 
 
 
@@ -46,7 +49,17 @@ router.get('/courses/:courseDepartment', adminController.getDepartmentCourses);
 
 router.get('/course/:courseCode', adminController.getCourseData);//-------------------
 
-router.get('/course/students/:courseCode', adminController.getCourseStudents); //mo4trk m3 teacher w student
+
+router.get('/course/semester/:courseCode/:semester', adminController.getCourseSemesterData);
+
+
+
+
+
+router.get('/course/semester/students/:courseCode/:semester', adminController.getCourseStudents); //mo4trk m3 teacher w student
+
+
+// --------------hna-----------
 
 router.get('/course/students/grades/:courseCode/:gradeType', adminController.getStudentsGrades); //mo4trk m3 teacher w student
 
@@ -58,7 +71,7 @@ router.put('/update/user/:id', adminController.updateUser);
 
 router.put('/update/course/:courseCode', adminController.updateCourse);
 
-router.put('/update/student/grade/:id/:courseCode', adminController.updateGrade);
+router.put('/update/course/semester/student/grade/:id/:courseCode/:semester', adminController.updateSemesterGrade);
 
 
 // ----------------DELETE Requests----------------
@@ -69,7 +82,7 @@ router.delete('/delete/user/course/:id/:courseCode', adminController.deleteUserC
 
 router.delete('/delete/course/:courseCode', adminController.deleteCourse);
 
-router.delete('/delete/course/grade/:courseCode/:type', adminController.deleteCourseGrade);
+router.delete('/delete/course/semester/grade/:courseCode/:semester/:type', adminController.deleteCourseSemesterGrade);
 
 
 // ------------------------------------------------------------------------------------------------
@@ -78,34 +91,36 @@ router.delete('/delete/course/grade/:courseCode/:type', adminController.deleteCo
 
 // ----------------POST Requests----------------
 
-router.post('/add/course/task/:id', TeacherStudentController.addTask);
+router.post('/add/course/semester/task/:id/:semester', TeacherStudentController.addSemesterTask);
 
-router.post('/add/course/lecture/:id', TeacherStudentController.addLecture);
+router.post('/add/course/semester/lecture/:id/:semester', TeacherStudentController.addSemesterLecture);
 
-router.post('/add/course/attendance/:id', TeacherStudentController.addAttendance);
+router.post('/add/course/semester/attendance/:id/:semester', TeacherStudentController.addSemesterAttendance);
 
 
 // ----------------GET Requests----------------
 router.get('/my/courses/:id', TeacherStudentController.myCourses); //mo4trk m3 student
+router.get('/my/courses/bystatus/:id/:status', TeacherStudentController.myCoursesByStatus); //mo4trk m3 student
+
 
 router.get('/course/tasks', TeacherStudentController.getTasks); //mo4trk m3 student
 
 // router.get('/course/attendance/sheet/:courseCode', TeacherStudentController.viewAttendance);
-router.get('/course/attendance/sheet/:id/:courseCode/:lectureNumber', TeacherStudentController.viewAttendance);
+router.get('/course/semester/attendance/sheet/:id/:courseCode/:lectureNumber/:semester', TeacherStudentController.viewSemesterAttendance);
 
-router.get('/course/student/total/attendance/:id/:courseCode', TeacherStudentController.studentTotalAttendance);
+router.get('/course/semester/student/total/attendance/:id/:courseCode/:semester', TeacherStudentController.semesterStudentTotalAttendance);
 
 
-router.get('/course/grade/sheet/:id/:courseCode/:gradeType', TeacherStudentController.viewGrades);
+router.get('/course/semester/grade/sheet/:id/:courseCode/:gradeType/:semester', TeacherStudentController.viewSemesterGrades);
 
-router.get('/course/student/total/grade/:id/:courseCode', TeacherStudentController.studentTotalGrades);
+router.get('/course/semester/student/total/grade/:id/:courseCode/:semester', TeacherStudentController.studentTotalGrades);
 
-router.get('/course/total/grades/:courseCode', TeacherStudentController.totalCourseGrades);
+router.get('/course/semester/total/grades/:courseCode/:semester', TeacherStudentController.totalCourseSemesterGrades);
 
 
 // ----------------DELETE Requests----------------
 
-router.delete('/delete/course/task/:id/:taskname', TeacherStudentController.deleteTask);
+router.delete('/delete/course/semester/task/:id/:taskname/:semester', TeacherStudentController.deleteSemesterTask);
 
 
 
@@ -118,20 +133,21 @@ router.delete('/delete/course/task/:id/:taskname', TeacherStudentController.dele
 
 // ----------------POST Requests----------------
 
-router.post('/course/attend/me/:id/:courseCode', TeacherStudentController.attendme);
+router.post('/course/semester/attend/me/:id/:courseCode/:semester', TeacherStudentController.semesterAttendme);
 
 
 
 // ----------------GET Requests----------------
-router.get('/course/my/grades/:id/:courseCode/:gradeType', TeacherStudentController.myGrades);
+router.get('/course/semester/my/grades/:id/:courseCode/:gradeType/:semester', TeacherStudentController.mySemesterGrades);
 
-router.get('/course/my/attendance/:id/:courseCode', TeacherStudentController.viewMyAttendance);
+router.get('/course/semester/my/attendance/:id/:courseCode/:semester', TeacherStudentController.viewMySemesterAttendance);
 
 
 
-router.get('/course/attendance/report/:courseCode', TeacherStudentController.viewAttendanceReport);
+router.get('/course/semester/attendance/report/:courseCode/:semester', TeacherStudentController.viewSemesterAttendanceReport);
 
-router.get('/course/grades-report/:courseCode', TeacherStudentController.GradesReport);
+router.get('/course/semester/grades-report/:courseCode/:semester', TeacherStudentController.viewSemesterGradesReport);
+
 
 
 

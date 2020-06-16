@@ -4,39 +4,54 @@ const Grade = require('../models/grade');
 const Attendance = require('../models/attendance');
 
 const teacherService = require('../service/teacher-student');
+const course = require('../models/course');
 
 // ----------------------My Courses-----------------------
 exports.myCourses = async (req, res, next) => {
     let id = req.params.id;
     try {
+        let newattribute = 'new';
         let usercourses = [];
-
-        usercourses = await User.findOne({ _id: id }, { 'courses.Id': 1, _id: 0 })
-        let data = usercourses.courses;
-        if (data) {
-            let courseInfo = [];
-            for (let i = 0; i < data.length; i++) {
-                courseInfo[i] = await teacherService.getCourseData(data[i].Id)
-            }
-            res.json(courseInfo)
-
+        usercourses = await User.findOne({ _id: id }, { courses: { $elemMatch: { status: newattribute } }, password: 0, })
+        if (usercourses) {
+            let data = usercourses.courses;
+            res.json(data);
         }
+
     } catch (err) {
         console.log(err.message);
         res.status(500).send("Error in Adding");
     }
 }
+exports.myCoursesByStatus = async (req, res, next) => {
+    let id = req.params.id;
+    let coursestatus = req.params.status;
+    try {
+        let newattribute = coursestatus;
+        let usercourses = [];
+        usercourses = await User.findOne({ _id: id }, { courses: { $elemMatch: { status: newattribute } }, password: 0, })
+        if (usercourses) {
+            console.log(usercourses)
+            let data = usercourses.courses;
+            res.json(data);
+        }
 
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).send("Error in Adding");
+    }
+}
 // -------------------Add Task--------------------------
-exports.addTask = async (req, res, next) => {
+exports.addSemesterTask = async (req, res, next) => {
     let taskType = req.body.type;
     let taskPath = req.body.path;
     let courseId = req.params.id;
+    let semester_time = req.params.semester;
     try {
         let checkCourseId = await Course.findOne({
             courseCode: courseId
         });
-        let checkfortask = await teacherService.searchfortask(courseId, taskType)
+        let checkfortask = await teacherService.searchfortask(courseId, semester_time, taskType);
         if (!checkCourseId) {
             return res.status(400).json({
                 msg: "course Not Found"
@@ -48,7 +63,7 @@ exports.addTask = async (req, res, next) => {
             });
         }
         else {
-            teacherService.addTask(courseId, taskType, taskPath).then((courseId) => {
+            teacherService.addTask(courseId, semester_time, taskType, taskPath).then((courseId) => {
                 if (courseId) {
                     res.json({ msg: 'Task Added Successfuly' });
                 }
@@ -64,9 +79,10 @@ exports.addTask = async (req, res, next) => {
 }
 
 // -------------------Delete Task--------------------------
-exports.deleteTask = async (req, res, next) => {
+exports.deleteSemesterTask = async (req, res, next) => {
     let code = req.params.id;
     let taskname = req.params.taskname;
+    let semester_time = req.params.semester;
     try {
         let checkforcourse = await Course.findOne({
             courseCode: code
@@ -77,7 +93,7 @@ exports.deleteTask = async (req, res, next) => {
             });
         }
         else {
-            teacherService.deleteTask(code, taskname).then((task) => {
+            teacherService.deleteTask(code, semester_time, taskname).then((task) => {
                 if (task) {
                     res.status(201).json({ msg: 'Task Deleted Successfuly' });
                 }
@@ -111,16 +127,18 @@ exports.getTasks = async (req, res, next) => {
 
 
 // -------------------Add Lecture--------------------------
-exports.addLecture = async (req, res, next) => {
+exports.addSemesterLecture = async (req, res, next) => {
     const { lectureNumber, lectureLocation, beacon_id } = req.body
     let courseCode = req.params.id;
+    let semester_time = req.params.semester;
+    // Course.findOne({ courseCode: courseId, 'semesters.semester_time': semester_time, 'semesters.tasks.type': { $in: taskname } }, { semesters: { $elemMatch: { semester_time: semester_time }
     try {
         let checkCourseId = await Course.findOne({
             courseCode
         });
         let checklectureNumber = await Course.findOne({
-            courseCode, 'lectures.lectureNumber': lectureNumber
-        });
+            courseCode, 'semesters.semester_time': semester_time, 'semesters.lectures.lectureNumber': { $in: lectureNumber }
+        }, { semesters: { $elemMatch: { semester_time: semester_time } } });
         if (!checkCourseId) {
             return res.status(400).json({
                 msg: "course Not Found"
@@ -132,7 +150,7 @@ exports.addLecture = async (req, res, next) => {
             });
         }
         else {
-            teacherService.addLecture(courseCode, lectureNumber, lectureLocation, beacon_id).then((lecture) => {
+            teacherService.addLecture(courseCode, semester_time, lectureNumber, lectureLocation, beacon_id).then((lecture) => {
                 if (lecture) {
                     res.json({ msg: 'Lecture Added Successfuly' });
                 }
@@ -149,24 +167,25 @@ exports.addLecture = async (req, res, next) => {
 
 
 // -------------------Add Attendance--------------------------
-exports.addAttendance = async (req, res, next) => {
+exports.addSemesterAttendance = async (req, res, next) => {
     const { lectureNumber, beacon_id } = req.body
     let courseId = req.params.id;
+    let semester_time = req.params.semester;
     try {
-        let Students = await teacherService.getCourseStudents(courseId);
+        let Students = await teacherService.getCourseSemesterStudents(courseId, semester_time);
 
         let checkCourseId = await Course.findOne({
             courseCode: courseId
         });
         let checkAttendance = await Attendance.findOne({
-            courseId, lectureNumber
+            courseId, lectureNumber, semester_time
         });
         let checklectureNumber = await Course.findOne({
-            courseCode: courseId, 'lectures.lectureNumber': lectureNumber
-        });
+            courseCode: courseId, 'semesters.semester_time': semester_time, 'semesters.lectures.lectureNumber': { $in: lectureNumber }
+        }, { semesters: { $elemMatch: { semester_time: semester_time } } });
         let checkbeacon_id = await Course.findOne({
-            courseCode: courseId, 'lectures.lectureNumber': lectureNumber, 'lectures.beacon_id': beacon_id
-        });
+            courseCode: courseId, 'semesters.semester_time': semester_time, 'semesters.lectures.lectureNumber': { $in: lectureNumber }, 'semesters.lectures.beacon_id': { $in: beacon_id }
+        }, { semesters: { $elemMatch: { semester_time: semester_time } } });
         if (!checkCourseId) {
             return res.status(400).json({
                 msg: "course Not Found"
@@ -190,7 +209,7 @@ exports.addAttendance = async (req, res, next) => {
         else {
             for (var i = 0; i < Students.length; i++) {
                 let stu = Students[i];
-                teacherService.addAttendance(stu._id, courseId, lectureNumber, beacon_id);
+                teacherService.addSemesterAttendance(stu._id, courseId, semester_time, lectureNumber, beacon_id);
             }
             res.status(200).json({
                 msg: "Lecture Attendance Added Successfuly"
@@ -203,11 +222,12 @@ exports.addAttendance = async (req, res, next) => {
 }
 
 // -------------------get Student Total Attendance Attendance--------------------------
-exports.studentTotalAttendance = async (req, res, next) => {
+exports.semesterStudentTotalAttendance = async (req, res, next) => {
     let courseId = req.params.courseCode
     let studentId = req.params.id;
+    let semester_time = req.params.semester;
     try {
-        let numberofattendance = await Attendance.find({ courseId, studentId, status: 'true' });
+        let numberofattendance = await Attendance.find({ courseId, studentId, semester_time, status: 'true' });
         let userdata = await User.findOne({ _id: studentId }, { password: 0, accessToken: 0 });
         if (numberofattendance) {
             total = { totalattendance: numberofattendance.length };
@@ -221,12 +241,13 @@ exports.studentTotalAttendance = async (req, res, next) => {
 }
 
 // -------------------View Attendance--------------------------
-exports.viewAttendance = async (req, res, next) => {
+exports.viewSemesterAttendance = async (req, res, next) => {
     let courseId = req.params.courseCode;
     let lectureNumber = req.params.lectureNumber;
     let studentId = req.params.id;
+    let semester_time = req.params.semester;
     try {
-        teacherService.viewAttendance(studentId, courseId, lectureNumber).then((attendance) => {
+        teacherService.viewAttendance(studentId, courseId, semester_time, lectureNumber).then((attendance) => {
             if (attendance) {
                 res.json(attendance);
             }
@@ -242,12 +263,14 @@ exports.viewAttendance = async (req, res, next) => {
 
 }
 
-exports.viewGrades = async (req, res, next) => {
+exports.viewSemesterGrades = async (req, res, next) => {
     let courseId = req.params.courseCode;
     let gradeType = req.params.gradeType;
     let studentId = req.params.id;
+    let semester_time = req.params.semester;
+
     try {
-        teacherService.viewGrades(studentId, courseId, gradeType).then((grade) => {
+        teacherService.viewGrades(studentId, courseId, semester_time, gradeType).then((grade) => {
             if (grade) {
                 res.json(grade);
             }
@@ -265,8 +288,9 @@ exports.viewGrades = async (req, res, next) => {
 exports.studentTotalGrades = async (req, res, next) => {
     let courseId = req.params.courseCode
     let studentId = req.params.id;
+    let semester_time = req.params.semester;
     try {
-        let totalGrades = await Grade.find({ courseId, studentId });
+        let totalGrades = await Grade.find({ courseId, studentId, semester_time });
         let userdata = await User.findOne({ _id: studentId }, { password: 0, accessToken: 0 });
         if (totalGrades) {
             let totalg = 0;
@@ -282,14 +306,16 @@ exports.studentTotalGrades = async (req, res, next) => {
     }
 
 }
-exports.totalCourseGrades = async (req, res, next) => {
+exports.totalCourseSemesterGrades = async (req, res, next) => {
     let courseCode = req.params.courseCode;
+    let semester_time = req.params.semester;
     try {
-        let totalGrades = await Course.findOne({ courseCode });
+        let totalGrades = await Course.findOne({ courseCode }, { _id: 0, courseCode: 1, semesters: { $elemMatch: { semester_time: semester_time } } })
+        let totalSemesterGrades = totalGrades.semesters[0];
         if (totalGrades) {
             let totalg = 0;
-            for (let i = 0; i < totalGrades.grades.length; i++) {
-                totalg = totalg + totalGrades.grades[i].grade;
+            for (let i = 0; i < totalSemesterGrades.grades.length; i++) {
+                totalg = totalg + totalSemesterGrades.grades[i].grade;
             }
             total = { totalGrades: totalg };
             res.json(total);
@@ -308,11 +334,12 @@ exports.totalCourseGrades = async (req, res, next) => {
 // ------------------------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------------------------
 
-exports.myGrades = async (req, res, next) => {
+exports.mySemesterGrades = async (req, res, next) => {
     let id = req.params.id;
     let courseId = req.params.courseCode;
     let gradeType = req.params.gradeType;
-    teacherService.MyGrades(id, courseId, gradeType).then((Grades) => {
+    let semester_time = req.params.semester;
+    teacherService.MyGrades(id, courseId, semester_time, gradeType).then((Grades) => {
         if (Grades) {
             res.json(Grades);
         }
@@ -326,14 +353,15 @@ exports.myGrades = async (req, res, next) => {
 }
 
 
-exports.attendme = async (req, res, next) => {
+exports.semesterAttendme = async (req, res, next) => {
     let studentId = req.params.id
     let courseId = req.params.courseCode;
     let lectureNumber = req.body.lectureNumber;
     let beacon_id = req.body.beacon_id;
+    let semester_time = req.params.semester;
     try {
         let checkbeacon_id = await Attendance.findOne({
-            studentId, courseId, lectureNumber, beacon_id
+            studentId, courseId, semester_time, lectureNumber, beacon_id
         });
         if (!checkbeacon_id) {
             return res.status(400).json({
@@ -341,7 +369,7 @@ exports.attendme = async (req, res, next) => {
             });
         }
         else {
-            teacherService.attendme(studentId, courseId, lectureNumber, beacon_id).then((data) => {
+            teacherService.attendme(studentId, courseId, semester_time, lectureNumber, beacon_id).then((data) => {
                 if (data) {
                     res.json({ msg: 'You Attended successfuly' });
                 }
@@ -358,11 +386,12 @@ exports.attendme = async (req, res, next) => {
 }
 
 
-exports.viewMyAttendance = async (req, res, next) => {
+exports.viewMySemesterAttendance = async (req, res, next) => {
     let id = req.params.id;
     let courseId = req.params.courseCode;
+    let semester_time = req.params.semester;
     try {
-        teacherService.viewMyAttendance(id, courseId).then((sheet) => {
+        teacherService.viewMyAttendance(id, courseId, semester_time).then((sheet) => {
             if (sheet) {
                 res.json(sheet);
             }
@@ -378,28 +407,31 @@ exports.viewMyAttendance = async (req, res, next) => {
 }
 
 
-exports.viewAttendanceReport = async (req, res, next) => {
+exports.viewSemesterAttendanceReport = async (req, res, next) => {
     let courseId = req.params.courseCode;
+    let semester_time = req.params.semester;
     try {
-        let getCourseLectures = await Course.findOne({ courseCode: courseId }, { "lectures.lectureNumber": 1, _id: 0 });
+
+
+        let getCourseLectures = await Course.findOne({ courseCode: courseId, 'semesters.semester_time': semester_time }, { "semesters.lectures.lectureNumber": 1, _id: 0, semesters: { $elemMatch: { semester_time: semester_time } } });
         if (getCourseLectures) {
 
-            let courselectures = getCourseLectures.lectures;
+            let courselectures = getCourseLectures.semesters[0].lectures;
             let arrayoflectures = [];
             for (let i = 0; i < courselectures.length; i++) {
                 arrayoflectures[i] = courselectures[i].lectureNumber;
             }
             let arrayofattendance = [];
             for (let y = 0; y < arrayoflectures.length; y++) {
-                arrayofattendance[y] = await Attendance.find({ courseId, lectureNumber: arrayoflectures[y] });
+                arrayofattendance[y] = await Attendance.find({ courseId, semester_time, lectureNumber: arrayoflectures[y] });
             }
             let arrayoftrueattendance = [];
             for (let y = 0; y < arrayoflectures.length; y++) {
-                arrayoftrueattendance[y] = await Attendance.find({ courseId, lectureNumber: arrayoflectures[y], status: true });
+                arrayoftrueattendance[y] = await Attendance.find({ courseId, semester_time, lectureNumber: arrayoflectures[y], status: true });
             }
             let arrayoffalseattendance = [];
             for (let y = 0; y < arrayoflectures.length; y++) {
-                arrayoffalseattendance[y] = await Attendance.find({ courseId, lectureNumber: arrayoflectures[y], status: false });
+                arrayoffalseattendance[y] = await Attendance.find({ courseId, semester_time, lectureNumber: arrayoflectures[y], status: false });
             }
 
             let arrayofreport = [];
@@ -442,34 +474,35 @@ exports.viewAttendanceReport = async (req, res, next) => {
 
 
 
-exports.GradesReport = async (req, res, next) => {
+exports.viewSemesterGradesReport = async (req, res, next) => {
     let courseId = req.params.courseCode;
+    let semester_time = req.params.semester;
 
     try {
-        let getCourseGrades = await Course.findOne({ courseCode: courseId }, { "grades.type": 1, "grades.grade": 1, _id: 0 });
+        let getCourseGrades = await Course.findOne({ courseCode: courseId, 'semesters.semester_time': semester_time }, { _id: 0, semesters: { $elemMatch: { semester_time: semester_time } } });
         if (getCourseGrades) {
 
-            let courseGrades = getCourseGrades.grades;
+            let courseGrades = getCourseGrades.semesters[0].grades;
             let arrayofGrades = [];
             for (let i = 0; i < courseGrades.length; i++) {
                 arrayofGrades[i] = [courseGrades[i].type, courseGrades[i].grade];
             }
             let arrayofStudentsGades = [];
             for (let y = 0; y < arrayofGrades.length; y++) {
-                arrayofStudentsGades[y] = await Grade.find({ courseId, gradeType: arrayofGrades[y][0] });
+                arrayofStudentsGades[y] = await Grade.find({ courseId, semester_time, gradeType: arrayofGrades[y][0] });
             }
 
             let arrayOfGradesUnder50Percent = [];
             for (let y = 0; y < arrayofGrades.length; y++) {
                 let Percent_50 = (arrayofGrades[y][1] * 50) / 100;
-                arrayOfGradesUnder50Percent[y] = await Grade.find({ courseId, gradeType: arrayofGrades[y][0], score: { $lt: Percent_50 } });
+                arrayOfGradesUnder50Percent[y] = await Grade.find({ courseId, semester_time, gradeType: arrayofGrades[y][0], score: { $lt: Percent_50 } });
             }
 
             let arrayOfGradesUnder65Percent = [];
             for (let y = 0; y < arrayofGrades.length; y++) {
                 let Percent_50 = (arrayofGrades[y][1] * 50) / 100;
                 let Percent_65 = (arrayofGrades[y][1] * 65) / 100;
-                arrayOfGradesUnder65Percent[y] = await Grade.find({ courseId, gradeType: arrayofGrades[y][0], score: { $lt: Percent_65, $gte: Percent_50 } });
+                arrayOfGradesUnder65Percent[y] = await Grade.find({ courseId, semester_time, gradeType: arrayofGrades[y][0], score: { $lt: Percent_65, $gte: Percent_50 } });
             }
 
             let arrayOfGradesUnder75Percent = [];
@@ -483,13 +516,13 @@ exports.GradesReport = async (req, res, next) => {
             for (let y = 0; y < arrayofGrades.length; y++) {
                 let Percent_85 = (arrayofGrades[y][1] * 85) / 100;
                 let Percent_75 = (arrayofGrades[y][1] * 75) / 100;
-                arrayOfGradesUnder85Percent[y] = await Grade.find({ courseId, gradeType: arrayofGrades[y][0], score: { $lt: Percent_85, $gte: Percent_75 } });
+                arrayOfGradesUnder85Percent[y] = await Grade.find({ courseId, semester_time, gradeType: arrayofGrades[y][0], score: { $lt: Percent_85, $gte: Percent_75 } });
             }
 
             let arrayOfGradesAbove85Percent = [];
             for (let y = 0; y < arrayofGrades.length; y++) {
                 let Percent_85 = (arrayofGrades[y][1] * 85) / 100;
-                arrayOfGradesAbove85Percent[y] = await Grade.find({ courseId, gradeType: arrayofGrades[y][0], score: { $gte: Percent_85 } });
+                arrayOfGradesAbove85Percent[y] = await Grade.find({ courseId, semester_time, gradeType: arrayofGrades[y][0], score: { $gte: Percent_85 } });
             }
 
             let arrayofGradesreport = [];
