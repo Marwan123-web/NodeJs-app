@@ -44,6 +44,9 @@ router.get('/user/:id/courses', adminController.UserCourses);
 
 router.get('/courses', adminController.getAllCourses);
 
+router.get('/courses/active', adminController.getActiveCourses);
+
+
 router.get('/courses/:courseDepartment', adminController.getDepartmentCourses);
 
 
@@ -72,6 +75,8 @@ router.put('/update/user/:id', adminController.updateUser);
 router.put('/update/course/:courseCode', adminController.updateCourse);
 
 router.put('/update/course/semester/student/grade/:id/:courseCode/:semester', adminController.updateSemesterGrade);
+
+router.put('/change/course/status/:courseCode/:status', adminController.changeCourseStatus);
 
 
 // ----------------DELETE Requests----------------

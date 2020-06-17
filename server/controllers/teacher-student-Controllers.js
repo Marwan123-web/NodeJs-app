@@ -31,7 +31,6 @@ exports.myCoursesByStatus = async (req, res, next) => {
         let usercourses = [];
         usercourses = await User.findOne({ _id: id }, { courses: { $elemMatch: { status: newattribute } }, password: 0, })
         if (usercourses) {
-            console.log(usercourses)
             let data = usercourses.courses;
             res.json(data);
         }

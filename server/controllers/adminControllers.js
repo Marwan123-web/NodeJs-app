@@ -62,10 +62,14 @@ exports.login = async (req, res, next) => {
                     expiresIn: "1d"
                 });
                 await User.findByIdAndUpdate(_id, { accessToken }, { useFindAndModify: false })
+                let name = user.name
+                var firstName = [];
+                var words = name.split(" ");
+                firstName.push(words[0]);
                 res.status(200).json({
                     _id: user._id,
                     email: user.email, role: user.role,
-                    name: user.name,
+                    name: firstName,
                     accessToken
                 });
             }
@@ -435,7 +439,7 @@ exports.addCourseSemester = async (req, res, next) => {
                     res.status(200).json({ msg: "Semester Added Successfuly" });
                 }
                 else {
-                    res.status(500).json({ msg: "Can't Add This Semester For This Course" });
+                    res.status(500).json({ msg: "Can't Add This Semester For This Course There Is Another Opened Course Semester!" });
                 }
             });
         }
@@ -526,6 +530,20 @@ exports.deleteCourse = async (req, res, next) => {
 // --------------------Get Courses---------------------
 exports.getAllCourses = async (req, res, next) => {
     adminService.getAllCourses().then((courses) => {
+        if (courses) {
+            res.json(courses);
+        }
+        else {
+            res.status(404).json({ msg: 'No Courses Yet' });
+        }
+    }).catch(err => {
+        console.log(err);
+        res.status(500).json({ msg: 'Internal Server Error' });
+    })
+}
+
+exports.getActiveCourses = async (req, res, next) => {
+    adminService.getAllActiveCourses().then((courses) => {
         if (courses) {
             res.json(courses);
         }
@@ -871,6 +889,37 @@ exports.getCourseGradeType = async (req, res, next) => {
     } catch (err) {
         console.log(err.message);
         res.status(500).send("Error in Saving");
+    }
+}
+
+exports.changeCourseStatus = async (req, res, next) => {
+    let code = req.params.courseCode;
+    let status = req.params.status
+    try {
+        let checkforcourse = await Course.findOne({
+            courseCode: code
+        });
+        if (!checkforcourse) {
+            return res.status(400).json({
+                msg: "Course Not Found"
+            });
+        }
+        else {
+            adminService.updateCourseStatus(code, status).then((change) => {
+                if (change) {
+                    res.status(201).json({ msg: "Course" + " " + status + " " + "Successfuly" });
+                }
+                else {
+                    res.status(404).json({ msg: "Can't Change Course Status" });
+                }
+            }).catch(err => {
+                console.log(err);
+                res.status(500).json({ msg: 'Internal Server Error' });
+            })
+        }
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).send("Error in updating");
     }
 }
 

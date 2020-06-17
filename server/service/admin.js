@@ -59,6 +59,9 @@ class adminService {
     static getAllCourses() {
         return Course.find();
     }
+    static getAllActiveCourses() {
+        return Course.find({ status: 'active' });
+    }
     static getDepartmentCourses(department) {
         return Course.find({ courseDepartment: department });
     }
@@ -72,13 +75,20 @@ class adminService {
     static getCourseByName(courseName) {
         return Course.findOne({ courseName: { $regex: courseName, $options: 'm' } });
     }
-    static addCourseSemester(code, semester_time) {
+    static async addCourseSemester(code, semester_time) {
         var semester_time = { semester_time: semester_time };
-        return Course.findOne({ courseCode: code }).updateOne(
-            { courseCode: code }, // your query, usually match by _id
-            { $push: { semesters: semester_time } }, // item(s) to match from array you want to pull/remove
-            { multi: true } // set this to true if you want to remove multiple elements.
-        )
+        let checkopencoursesemester = await Course.findOne({ courseCode: code }, { semesters: { $elemMatch: { semester_status: 'open' } } })
+        if (checkopencoursesemester) {
+            return
+        }
+        else {
+            return Course.findOne({ courseCode: code }).updateOne(
+                { courseCode: code }, // your query, usually match by _id
+                { $push: { semesters: semester_time } }, // item(s) to match from array you want to pull/remove
+                { multi: true } // set this to true if you want to remove multiple elements.
+            )
+        }
+
     }
     static deleteCourse(code) {
         User.find().updateMany(
@@ -122,6 +132,22 @@ class adminService {
             { $set: { score: score } },
             { multi: true }
         )
+    }
+
+    static async updateCourseStatus(courseCode, status) {
+        let closesemesters = await Course.findOne({ courseCode }, { semesters: { $elemMatch: { semester_status: 'open' } } })
+            .updateOne(
+                { 'semesters.semester_status': "open" }, // your query, usually match by _id
+                { $set: { 'semesters.$.semester_status': "finished" } }, // item(s) to match from array you want to pull/remove
+                { multi: false } // set this to true if you want to remove multiple elements.
+            );
+        return Course.updateOne(
+            { courseCode },
+            { $set: { status: status } },
+            { multi: false }
+        )
+
+
     }
 
 }
