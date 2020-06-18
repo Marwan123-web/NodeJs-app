@@ -35,8 +35,6 @@ router.get('/users', adminController.getAllUsers);
 router.get('/users/:role', adminController.getUserByRole);
 
 
-// router.get('/user', adminController.getUser);
-
 router.get('/user/:id/profile', adminController.getUserProfile);
 
 
@@ -61,12 +59,6 @@ router.get('/course/semester/:courseCode/:semester', adminController.getCourseSe
 
 router.get('/course/semester/students/:courseCode/:semester', adminController.getCourseStudents); //mo4trk m3 teacher w student
 
-
-// --------------hna-----------
-
-router.get('/course/students/grades/:courseCode/:gradeType', adminController.getStudentsGrades); //mo4trk m3 teacher w student
-
-router.get('/course/grades/:courseCode/:gradeType', adminController.getCourseGradeType);
 
 // ----------------PUT Requests----------------
 
@@ -108,9 +100,7 @@ router.get('/my/courses/:id', TeacherStudentController.myCourses); //mo4trk m3 s
 router.get('/my/courses/bystatus/:id/:status', TeacherStudentController.myCoursesByStatus); //mo4trk m3 student
 
 
-router.get('/course/tasks', TeacherStudentController.getTasks); //mo4trk m3 student
 
-// router.get('/course/attendance/sheet/:courseCode', TeacherStudentController.viewAttendance);
 router.get('/course/semester/attendance/sheet/:id/:courseCode/:lectureNumber/:semester', TeacherStudentController.viewSemesterAttendance);
 
 router.get('/course/semester/student/total/attendance/:id/:courseCode/:semester', TeacherStudentController.semesterStudentTotalAttendance);
@@ -160,6 +150,7 @@ router.get('/course/semester/grades-report/:courseCode/:semester', TeacherStuden
 
 
 
+router.put('/change/student/course/status/:courseCode', adminController.decidePassOrFail);
 
 
 

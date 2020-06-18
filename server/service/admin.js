@@ -36,7 +36,10 @@ class adminService {
     }
 
     static async addUserCourse(id, courseCode) {
-        let courseSemesters = await Course.findOne({ courseCode }, { semesters: { $elemMatch: { semester_status: 'open' } } })
+        let courseSemesters = await Course.findOne({ courseCode }, { semesters: { $elemMatch: { semester_status: 'open' } } });
+        if (courseSemesters.semesters.length == 0) {
+            return
+        }
         var course = { Id: courseCode, semester_time: courseSemesters.semesters[0].semester_time };
         return User.findOne({ _id: id }).updateOne(
             {}, // your query, usually match by _id
@@ -135,20 +138,85 @@ class adminService {
     }
 
     static async updateCourseStatus(courseCode, status) {
-        let closesemesters = await Course.findOne({ courseCode }, { semesters: { $elemMatch: { semester_status: 'open' } } })
-            .updateOne(
-                { 'semesters.semester_status': "open" }, // your query, usually match by _id
-                { $set: { 'semesters.$.semester_status': "finished" } }, // item(s) to match from array you want to pull/remove
-                { multi: false } // set this to true if you want to remove multiple elements.
-            );
+        if (status == 'disable') {
+            await Course.findOne({ courseCode }, { semesters: { $elemMatch: { semester_status: 'open' } } })
+                .updateOne(
+                    { 'semesters.semester_status': "open" }, // your query, usually match by _id
+                    { $set: { 'semesters.$.semester_status': "finished" } }, // item(s) to match from array you want to pull/remove
+                    { multi: false } // set this to true if you want to remove multiple elements.
+                );
+        }
         return Course.updateOne(
             { courseCode },
             { $set: { status: status } },
             { multi: false }
         )
+    }
+    static async studentDecidePassOrFail(studentId, courseCode) {
+        let openemesters = await Course.findOne({ courseCode }, { semesters: { $elemMatch: { semester_status: 'open' } } });
+        let courseSmesterTime = openemesters.semesters[0].semester_time;
+        let courseGrades = openemesters.semesters[0].grades;
+        let arrayOfGrades = [];
+        for (let i = 0; i < courseGrades.length; i++) {
+            arrayOfGrades[i] = courseGrades[i]
+        }
+        let finalCourseGrade = arrayOfGrades[arrayOfGrades.length - 1]
+        let totalGrade = [];
+        for (let i = 0; i < courseGrades.length; i++) {
+            totalGrade[i] = await Grade.findOne({ studentId, courseId: courseCode, semester_time: courseSmesterTime, gradeType: courseGrades[i].type })
+        }
+        let finalStudentGrade = await Grade.findOne({ studentId, courseId: courseCode, semester_time: courseSmesterTime, gradeType: 'Final' })
+        let total = 0
+        for (let i = 0; i < totalGrade.length; i++) {
+            total = total + totalGrade[i].score
+        }
+        let checkFinalCourseGarde30Percent = (finalCourseGrade.grade / 100) * 30;
+        let StudentGradeInFinal = finalStudentGrade.score;
+        if (total >= 50 && (StudentGradeInFinal >= checkFinalCourseGarde30Percent)) {
+            await User.findOne({ _id: studentId }, { courses: { $elemMatch: { Id: courseCode, semester_time: courseSmesterTime, status: 'new' } } })
+                .updateOne(
+                    { 'courses.status': "new" }, // your query, usually match by _id
+                    { $set: { 'courses.$.status': "pass" } }, // item(s) to match from array you want to pull/remove
+                    { multi: false } // set this to true if you want to remove multiple elements.
+                );
+        }
+        else if (total >= 50 && (StudentGradeInFinal < checkFinalCourseGarde30Percent)) {
+            await User.findOne({ _id: studentId }, { courses: { $elemMatch: { Id: courseCode, semester_time: courseSmesterTime, status: 'new' } } })
+                .updateOne(
+                    { 'courses.status': "new" }, // your query, usually match by _id
+                    { $set: { 'courses.$.status': "fail" } }, // item(s) to match from array you want to pull/remove
+                    { multi: false } // set this to true if you want to remove multiple elements.
+                );
+        }
+        else {
+            await User.findOne({ _id: studentId }, { courses: { $elemMatch: { Id: courseCode, semester_time: courseSmesterTime, status: 'new' } } })
+                .updateOne(
+                    { 'courses.status': "new" }, // your query, usually match by _id
+                    { $set: { 'courses.$.status': "fail" } }, // item(s) to match from array you want to pull/remove
+                    { multi: false } // set this to true if you want to remove multiple elements.
+                );
+        }
 
+    }
+    static getCourseSemesterStudents(courseCode, semester_time) {
+        return User.find({ 'courses.Id': { $in: [courseCode] }, 'courses.semester_time': { $in: [semester_time] }, role: 'student' }, { _id: 1 });
 
     }
 
+
+    static getCourseSemesterTeachers(courseCode, semester_time) {
+        return User.find({ 'courses.Id': { $in: [courseCode] }, 'courses.semester_time': { $in: [semester_time] }, role: 'teacher' }, { _id: 1 });
+
+    }
+    static async TeacherCoursePass(TeacherId, courseCode) {
+        let openemesters = await Course.findOne({ courseCode }, { semesters: { $elemMatch: { semester_status: 'open' } } });
+        let courseSmesterTime = openemesters.semesters[0].semester_time;
+        await User.findOne({ _id: TeacherId }, { courses: { $elemMatch: { Id: courseCode, semester_time: courseSmesterTime, status: 'new' } } })
+            .updateOne(
+                { 'courses.status': "new" }, // your query, usually match by _id
+                { $set: { 'courses.$.status': "pass" } }, // item(s) to match from array you want to pull/remove
+                { multi: false } // set this to true if you want to remove multiple elements.
+            );
+    }
 }
 module.exports = adminService;

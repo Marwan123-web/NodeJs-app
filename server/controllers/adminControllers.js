@@ -16,7 +16,7 @@ async function validatePassword(plainPassword, hashedPassword) {
     return await bcrypt.compare(plainPassword, hashedPassword);
 }
 // ---------------------ADD User----------------------
-exports.addUser = async (req, res, next) => {
+exports.addUser = async (req, res, next) => {//[]
     try {
         const { _id, name, email, password, role, dataOfJoin } = req.body
         const hashedPassword = await hashPassword(password);
@@ -48,7 +48,7 @@ exports.addUser = async (req, res, next) => {
 }
 
 // ---------------------Login----------------------
-exports.login = async (req, res, next) => {
+exports.login = async (req, res, next) => {//[]
     try {
         const { _id, password } = req.body;
         let user = await User.findOne({ _id });
@@ -85,7 +85,7 @@ exports.login = async (req, res, next) => {
 }
 
 // ---------------------Profile----------------------
-exports.profile = async (req, res, next) => {
+exports.profile = async (req, res, next) => {//[]
     let id = req.params.id;
     adminService.getUserData(id).then((data) => {
         if (data) {
@@ -101,7 +101,7 @@ exports.profile = async (req, res, next) => {
 }
 
 // --------------------All Users----------------------
-exports.getAllUsers = async (req, res, next) => {
+exports.getAllUsers = async (req, res, next) => {//[]
     adminService.getAllUsers().then((users) => {
         if (users) {
             res.json(users);
@@ -116,7 +116,7 @@ exports.getAllUsers = async (req, res, next) => {
 }
 
 // -------------------Users by Role----------------------
-exports.getUserByRole = async (req, res, next) => {
+exports.getUserByRole = async (req, res, next) => {//[]
     let role = req.params.role;
     adminService.getUserByRole(role).then((users) => {
         if (users) {
@@ -131,42 +131,10 @@ exports.getUserByRole = async (req, res, next) => {
     })
 }
 
-// --------------------get User By Id/Name ----------------------
-// exports.getUser = async (req, res, next) => {
-//     let id = req.body._id;
-//     let name = req.body.name;
-//     let role = req.body.role;
-//     if (id) {
-//         adminService.getUserById(id, role).then((user) => {
-//             if (user) {
-//                 res.json(user);
-//             }
-//             else {
-//                 res.status(404).json({ msg: 'User Not Found' });
-//             }
-//         }).catch(err => {
-//             console.log(err);
-//             res.status(500).json({ msg: 'Internal Server Error' });
-//         })
-//     }
-//     else {
-//         adminService.getUserByName(name, role).then((user) => {
-//             if (user) {
-//                 res.json(user);
-//             }
-//             else {
-//                 res.status(404).json({ msg: 'User Not Found' });
-//             }
-//         }).catch(err => {
-//             console.log(err);
-//             res.status(500).json({ msg: 'Internal Server Error' });
-//         })
-//     }
-// }
 
 
 // --------------------get User By Id/Name ----------------------
-exports.getUserProfile = async (req, res, next) => {
+exports.getUserProfile = async (req, res, next) => {//[]
     let id = req.params.id;
     adminService.getUserById(id).then((user) => {
         if (user) {
@@ -182,7 +150,7 @@ exports.getUserProfile = async (req, res, next) => {
 }
 
 // --------------------update User by ID----------------------
-exports.updateUser = async (req, res, next) => {
+exports.updateUser = async (req, res, next) => {//[]
     let id = req.params.id;
     try {
         let checkforUser = await User.findOne({
@@ -211,7 +179,7 @@ exports.updateUser = async (req, res, next) => {
 }
 
 // --------------------Delete User by ID----------------------
-exports.deleteUser = async (req, res, next) => {
+exports.deleteUser = async (req, res, next) => {//[]
     let id = req.params.id;
     try {
         let checkforUser = await User.findOne({
@@ -243,57 +211,14 @@ exports.deleteUser = async (req, res, next) => {
     }
 }
 
-// --------------------Get User Courses----------------------
-// exports.getUserCourses = async (req, res, next) => {
-//     let id = req.params.id;
-//     try {
-//         let checkforUser = await User.findOne({
-//             _id: id
-//         });
-//         if (!checkforUser) {
-//             return res.status(400).json({
-//                 msg: "User Not Found"
-//             });
-//         }
-//         else {
-//             adminService.getUserCourses(id).then((courses) => {
-//                 if (courses) {
-//                     res.json(courses);
-//                 }
-//                 else {
-//                     res.status(500).json({ msg: "No Courses For This User" });
-//                 }
-//             }).catch(err => {
-//                 console.log(err);
-//                 res.status(500).json({ msg: "Internal Server Error" });
-//             });
-//         }
-
-//     } catch (err) {
-//         console.log(err.message);
-//         res.status(500).send("Error in Saving");
-//     }
-// }
-exports.UserCourses = async (req, res, next) => {//ana hna 
+exports.UserCourses = async (req, res, next) => {//[]
     let id = req.params.id;
     try {
         let usercourses = [];
         usercourses = await User.findOne({ _id: id }, { _id: 0 })
         let data = usercourses.courses;
         if (data) {
-            //     let courseInfo = [];
-            //     for (let i = 0; i < data.length; i++) {
-            //         courseInfo[i] = await adminService.getCourseByCode(data[i].Id)
-            //     }
-            //     let arr = []
-            //     for (let i = 0; i < data.length; i++) {
-            //         let x = Object.assign(courseInfo[i], data[i]);
-            //         // let x = courseInfo[i] + data[i]
-            //         arr[i] = [x]
-            //     }
-            //     // usercourses = { courseInfo, data };
             res.json(data)
-
         }
     } catch (err) {
         console.log(err.message);
@@ -302,10 +227,11 @@ exports.UserCourses = async (req, res, next) => {//ana hna
 }
 
 // --------------------ADD User Course----------------------
-exports.addUserCourse = async (req, res, next) => {
+exports.addUserCourse = async (req, res, next) => {//[]
     let courseCode = req.body.courseCode;
     let id = req.params.id;
     try {
+
         let checkforUser = await User.findOne({
             _id: id
         });
@@ -313,7 +239,7 @@ exports.addUserCourse = async (req, res, next) => {
             courseCode: courseCode
         });
         let checkforcourse = await User.findOne({
-            _id: id, 'courses.Id': courseCode,
+            _id: id, 'courses.Id': courseCode, 'courses.status': 'pass'
         });
         if (!checkforUser) {
             return res.status(400).json({
@@ -322,7 +248,7 @@ exports.addUserCourse = async (req, res, next) => {
         }
         else if (checkforcourse) {
             return res.status(400).json({
-                msg: "This User Had Register This Course Before"
+                msg: "This User Had Register This Course Before And Passed It"
             });
         }
         else if (!checkforTheCourse) {
@@ -336,7 +262,7 @@ exports.addUserCourse = async (req, res, next) => {
                     res.status(200).json({ msg: 'course is added successfuly' });
                 }
                 else {
-                    res.status(500).json({ msg: "Can't Add This Course For This User" });
+                    res.status(500).json({ msg: "There Is No Opened Semester For This Course Yet" });
                 }
             });
         }
@@ -347,7 +273,7 @@ exports.addUserCourse = async (req, res, next) => {
 }
 
 // --------------------Delete User Course----------------------
-exports.deleteUserCourse = async (req, res, next) => {
+exports.deleteUserCourse = async (req, res, next) => {//[]
     let courseCode = req.params.courseCode;
     let id = req.params.id;
     try {
@@ -355,7 +281,10 @@ exports.deleteUserCourse = async (req, res, next) => {
             _id: id
         });
         let checkforcourse = await User.findOne({
-            _id: id, 'courses.Id': courseCode
+            _id: id, 'courses.Id': courseCode,
+        });
+        let checkforcoursepass = await User.findOne({
+            _id: id, 'courses.Id': courseCode, 'courses.status': 'pass'
         });
         if (!checkforUser) {
             return res.status(400).json({
@@ -366,7 +295,13 @@ exports.deleteUserCourse = async (req, res, next) => {
             return res.status(400).json({
                 msg: "This User Dont Register This Course"
             });
-        } else {
+        }
+        else if (checkforcoursepass) {
+            return res.status(400).json({
+                msg: "This User Registered This Course Before And Passed It"
+            });
+        }
+        else {
             let deleteUserGrades = await Grade.deleteMany({ "studentId": id, "courseId": courseCode });
             let deleteUserAttendance = await Attendance.deleteMany({ "studentId": id, "courseId": courseCode });
             if (deleteUserGrades && deleteUserAttendance) {
@@ -392,7 +327,7 @@ exports.deleteUserCourse = async (req, res, next) => {
 
 
 // --------------------Add Course----------------------
-exports.addCourse = async (req, res, next) => {
+exports.addCourse = async (req, res, next) => {//[]
     try {
         const { courseCode, courseName, courseDepartment, creaditHours } = req.body
         const checkCourseId = await Course.findOne({ courseCode });
@@ -414,7 +349,8 @@ exports.addCourse = async (req, res, next) => {
         next(error)
     }
 }
-exports.addCourseSemester = async (req, res, next) => {
+// --------------------Add Course Semester----------------------
+exports.addCourseSemester = async (req, res, next) => {//[]
     let courseCode = req.params.courseCode;
     let semester_time = req.body.semester_time;
 
@@ -450,8 +386,8 @@ exports.addCourseSemester = async (req, res, next) => {
 }
 
 
-
-exports.getCourseSemesterData = async (req, res, next) => {
+// --------------------Get Course Semester Data----------------------
+exports.getCourseSemesterData = async (req, res, next) => {//[]
     let courseCode = req.params.courseCode;
     let semester_time = req.params.semester;
     try {
@@ -465,7 +401,7 @@ exports.getCourseSemesterData = async (req, res, next) => {
 
 
 // --------------------Update Course----------------
-exports.updateCourse = async (req, res, next) => {
+exports.updateCourse = async (req, res, next) => {//[]
     let code = req.params.courseCode;
     try {
         let checkforcourse = await Course.findOne({
@@ -494,7 +430,7 @@ exports.updateCourse = async (req, res, next) => {
 }
 
 // --------------------Delete Course----------------
-exports.deleteCourse = async (req, res, next) => {
+exports.deleteCourse = async (req, res, next) => {//[]
     let code = req.params.courseCode;
     try {
         let checkforcourse = await Course.findOne({
@@ -528,7 +464,7 @@ exports.deleteCourse = async (req, res, next) => {
 
 
 // --------------------Get Courses---------------------
-exports.getAllCourses = async (req, res, next) => {
+exports.getAllCourses = async (req, res, next) => {//[]
     adminService.getAllCourses().then((courses) => {
         if (courses) {
             res.json(courses);
@@ -542,7 +478,7 @@ exports.getAllCourses = async (req, res, next) => {
     })
 }
 
-exports.getActiveCourses = async (req, res, next) => {
+exports.getActiveCourses = async (req, res, next) => {//[]
     adminService.getAllActiveCourses().then((courses) => {
         if (courses) {
             res.json(courses);
@@ -557,7 +493,7 @@ exports.getActiveCourses = async (req, res, next) => {
 }
 
 // --------------------Get Department Courses---------------------
-exports.getDepartmentCourses = async (req, res, next) => {
+exports.getDepartmentCourses = async (req, res, next) => {//[]
     let department = req.params.courseDepartment;
     adminService.getDepartmentCourses(department).then((courses) => {
         if (courses) {
@@ -572,44 +508,9 @@ exports.getDepartmentCourses = async (req, res, next) => {
     })
 }
 
-// --------------------Get Course By Id/Name---------------------
-// exports.getCourse = async (req, res, next) => {
-//     let code = req.body.courseCode;
-//     let name = req.body.courseName;
-//     try {
-//         if (code) {
-//             adminService.getCourseByCode(code).then((user) => {
-//                 if (user) {
-//                     res.json(user);
-//                 }
-//                 else {
-//                     res.status(404).json({ msg: 'Course Not Found' });
-//                 }
-//             }).catch(err => {
-//                 console.log(err);
-//                 res.status(500).json({ msg: 'Internal Server Error' });
-//             })
-//         }
-//         else {
-//             adminService.getCourseByName(name).then((user) => {
-//                 if (user) {
-//                     res.json(user);
-//                 }
-//                 else {
-//                     res.status(404).json({ msg: 'Course Not Found' });
-//                 }
-//             }).catch(err => {
-//                 console.log(err);
-//                 res.status(500).json({ msg: 'Internal Server Error' });
-//             })
-//         }
-//     } catch (err) {
-//         console.log(err.message);
-//         res.status(500).send("Error in Saving");
-//     }
-// }
+
 // --------------------Get Course Data---------------------
-exports.getCourseData = async (req, res, next) => {
+exports.getCourseData = async (req, res, next) => {//[]
     let code = req.params.courseCode;
     try {
         adminService.getCourseByCode(code).then((course) => {
@@ -631,8 +532,8 @@ exports.getCourseData = async (req, res, next) => {
     }
 }
 
-// --------------------Add Course Grades----------------------
-exports.addCourseSemesterGrade = async (req, res, next) => {
+// --------------------Add Course Semester Grades----------------------
+exports.addCourseSemesterGrade = async (req, res, next) => {//[]
     let courseCode = req.params.courseCode;
     let semester_time = req.params.semester;
     let type = req.body.type;
@@ -675,8 +576,8 @@ exports.addCourseSemesterGrade = async (req, res, next) => {
     }
 }
 
-// --------------------Delete Course Grade----------------------
-exports.deleteCourseSemesterGrade = async (req, res, next) => {
+// --------------------Delete Course Semester Grade----------------------
+exports.deleteCourseSemesterGrade = async (req, res, next) => {//[]
     let courseCode = req.params.courseCode;
     let semester_time = req.params.semester;
     let type = req.params.type;
@@ -723,7 +624,7 @@ exports.deleteCourseSemesterGrade = async (req, res, next) => {
 
 
 // --------------------Get Users In Course----------------------
-exports.getCourseStudents = async (req, res, next) => {
+exports.getCourseStudents = async (req, res, next) => {//[]
     let code = req.params.courseCode;
     let semester_time = req.params.semester;
     try {
@@ -741,8 +642,8 @@ exports.getCourseStudents = async (req, res, next) => {
     }
 }
 
-// --------------------Add Grade----------------------
-exports.addSemesterGrade = async (req, res, next) => {
+// --------------------Add Semester Grade----------------------
+exports.addSemesterGrade = async (req, res, next) => {//[]
     const { studentId, gradeType, score } = req.body
     let courseId = req.params.courseCode;
     let semester_time = req.params.semester;
@@ -781,8 +682,8 @@ exports.addSemesterGrade = async (req, res, next) => {
     }
 }
 
-// --------------------Update Grade----------------------
-exports.updateSemesterGrade = async (req, res, next) => {
+// --------------------Update Semester Grade----------------------
+exports.updateSemesterGrade = async (req, res, next) => {//[]
     const { gradeType, score } = req.body
     let studentId = req.params.id;
     let courseId = req.params.courseCode;
@@ -825,74 +726,8 @@ exports.updateSemesterGrade = async (req, res, next) => {
 
 }
 
-// -------------------Get Students Grades----------------------
-exports.getStudentsGrades = async (req, res, next) => {
-    let code = req.params.courseCode;
-    let gradeType = req.params.gradeType;
-    try {
-        let checkforcourse = await Grade.findOne({
-            courseId: code
-        });
-        if (!checkforcourse) {
-            return res.status(400).json({
-                msg: "Course Not Found"
-            });
-        }
-        else {
-            adminService.getCourseGrades(code, gradeType).then((grades) => {
-                if (grades) {
-                    res.json(grades);
-                }
-                else {
-                    res.status(404).json({ msg: 'No Grades For This Course Yet' });
-                }
-            }).catch(err => {
-                console.log(err);
-                res.status(500).json({ msg: 'Internal Server Error' });
-            })
-        }
 
-    } catch (err) {
-        console.log(err.message);
-        res.status(500).send("Error in Saving");
-    }
-}
-
-
-// -------------------Get Students Grades----------------------
-exports.getCourseGradeType = async (req, res, next) => {
-    let code = req.params.courseCode;
-    let gradeType = req.params.gradeType;
-    try {
-        let checkforcourse = await Grade.findOne({
-            courseId: code
-        });
-        if (!checkforcourse) {
-            return res.status(400).json({
-                msg: "Course Not Found"
-            });
-        }
-        else {
-            adminService.getCourseGradeType(code, gradeType).then((grades) => {
-                if (grades) {
-                    res.json(grades);
-                }
-                else {
-                    res.status(404).json({ msg: 'No Grades For This Course Yet' });
-                }
-            }).catch(err => {
-                console.log(err);
-                res.status(500).json({ msg: 'Internal Server Error' });
-            })
-        }
-
-    } catch (err) {
-        console.log(err.message);
-        res.status(500).send("Error in Saving");
-    }
-}
-
-exports.changeCourseStatus = async (req, res, next) => {
+exports.changeCourseStatus = async (req, res, next) => {//[]
     let code = req.params.courseCode;
     let status = req.params.status
     try {
@@ -917,12 +752,43 @@ exports.changeCourseStatus = async (req, res, next) => {
                 res.status(500).json({ msg: 'Internal Server Error' });
             })
         }
+
+
     } catch (err) {
         console.log(err.message);
         res.status(500).send("Error in updating");
     }
 }
+exports.decidePassOrFail = async (req, res, next) => {
+    try {
+        let courseCode = req.params.courseCode;
+        let openemesters = await Course.findOne({ courseCode }, { semesters: { $elemMatch: { semester_status: 'open' } } });
+        if (openemesters.semesters.length > 0) {
+            let courseSmesterTime = openemesters.semesters[0].semester_time;
+            let CourseStudents = await adminService.getCourseSemesterStudents(courseCode, courseSmesterTime);
+            let CourseTeachers = await adminService.getCourseSemesterTeachers(courseCode, courseSmesterTime);
 
+            for (var i = 0; i < CourseStudents.length; i++) {
+                let stu = CourseStudents[i];
+                adminService.studentDecidePassOrFail(stu._id, courseCode)
+            }
+            for (var i = 0; i < CourseTeachers.length; i++) {
+                let tec = CourseTeachers[i];
+                adminService.TeacherCoursePass(tec._id, courseCode)
+            }
+            res.status(200).json({
+                msg: "pass Or Fail Decided"
+            });
+            next();
+        }
+        res.status(200).json({
+            msg: "No Opened Semester"
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
 // ---------------------------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------------------------
 exports.grantAccess = function (action, resource) {
@@ -954,3 +820,6 @@ exports.allowIfLoggedin = async (req, res, next) => {
         next(error);
     }
 }
+
+
+

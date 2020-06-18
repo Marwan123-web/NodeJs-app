@@ -7,7 +7,7 @@ const teacherService = require('../service/teacher-student');
 const course = require('../models/course');
 
 // ----------------------My Courses-----------------------
-exports.myCourses = async (req, res, next) => {
+exports.myCourses = async (req, res, next) => {//[]
     let id = req.params.id;
     try {
         let newattribute = 'new';
@@ -23,7 +23,7 @@ exports.myCourses = async (req, res, next) => {
         res.status(500).send("Error in Adding");
     }
 }
-exports.myCoursesByStatus = async (req, res, next) => {
+exports.myCoursesByStatus = async (req, res, next) => {//[]
     let id = req.params.id;
     let coursestatus = req.params.status;
     try {
@@ -41,7 +41,7 @@ exports.myCoursesByStatus = async (req, res, next) => {
     }
 }
 // -------------------Add Task--------------------------
-exports.addSemesterTask = async (req, res, next) => {
+exports.addSemesterTask = async (req, res, next) => {//[]
     let taskType = req.body.type;
     let taskPath = req.body.path;
     let courseId = req.params.id;
@@ -77,8 +77,8 @@ exports.addSemesterTask = async (req, res, next) => {
     }
 }
 
-// -------------------Delete Task--------------------------
-exports.deleteSemesterTask = async (req, res, next) => {
+// -------------------Delete Semester Task--------------------------
+exports.deleteSemesterTask = async (req, res, next) => {//[]
     let code = req.params.id;
     let taskname = req.params.taskname;
     let semester_time = req.params.semester;
@@ -107,26 +107,10 @@ exports.deleteSemesterTask = async (req, res, next) => {
     }
 }
 
-// -------------------View Tasks--------------------------
-exports.getTasks = async (req, res, next) => {
-    let courseCode = req.body.courseCode;
-    teacherService.viewTasks(courseCode).then((data) => {
-        if (data) {
-            res.json(data);
-        }
-        else {
-            res.status(404).json({ msg: 'No Tasks Yet' });
-        }
-    }).catch(err => {
-        console.log(err);
-        res.status(500).json({ msg: 'Internal Server Error' });
-    })
-}
 
 
-
-// -------------------Add Lecture--------------------------
-exports.addSemesterLecture = async (req, res, next) => {
+// -------------------Add Semester Lecture--------------------------
+exports.addSemesterLecture = async (req, res, next) => {//[]
     const { lectureNumber, lectureLocation, beacon_id } = req.body
     let courseCode = req.params.id;
     let semester_time = req.params.semester;
@@ -165,8 +149,8 @@ exports.addSemesterLecture = async (req, res, next) => {
 }
 
 
-// -------------------Add Attendance--------------------------
-exports.addSemesterAttendance = async (req, res, next) => {
+// -------------------Add Semester Attendance--------------------------
+exports.addSemesterAttendance = async (req, res, next) => {//[]
     const { lectureNumber, beacon_id } = req.body
     let courseId = req.params.id;
     let semester_time = req.params.semester;
@@ -221,7 +205,7 @@ exports.addSemesterAttendance = async (req, res, next) => {
 }
 
 // -------------------get Student Total Attendance Attendance--------------------------
-exports.semesterStudentTotalAttendance = async (req, res, next) => {
+exports.semesterStudentTotalAttendance = async (req, res, next) => {//[]
     let courseId = req.params.courseCode
     let studentId = req.params.id;
     let semester_time = req.params.semester;
@@ -240,7 +224,7 @@ exports.semesterStudentTotalAttendance = async (req, res, next) => {
 }
 
 // -------------------View Attendance--------------------------
-exports.viewSemesterAttendance = async (req, res, next) => {
+exports.viewSemesterAttendance = async (req, res, next) => {//[]
     let courseId = req.params.courseCode;
     let lectureNumber = req.params.lectureNumber;
     let studentId = req.params.id;
@@ -262,7 +246,7 @@ exports.viewSemesterAttendance = async (req, res, next) => {
 
 }
 
-exports.viewSemesterGrades = async (req, res, next) => {
+exports.viewSemesterGrades = async (req, res, next) => {//[]
     let courseId = req.params.courseCode;
     let gradeType = req.params.gradeType;
     let studentId = req.params.id;
@@ -284,7 +268,7 @@ exports.viewSemesterGrades = async (req, res, next) => {
     }
 
 }
-exports.studentTotalGrades = async (req, res, next) => {
+exports.studentTotalGrades = async (req, res, next) => {//[]
     let courseId = req.params.courseCode
     let studentId = req.params.id;
     let semester_time = req.params.semester;
@@ -305,7 +289,7 @@ exports.studentTotalGrades = async (req, res, next) => {
     }
 
 }
-exports.totalCourseSemesterGrades = async (req, res, next) => {
+exports.totalCourseSemesterGrades = async (req, res, next) => {//[]
     let courseCode = req.params.courseCode;
     let semester_time = req.params.semester;
     try {
@@ -333,7 +317,7 @@ exports.totalCourseSemesterGrades = async (req, res, next) => {
 // ------------------------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------------------------
 
-exports.mySemesterGrades = async (req, res, next) => {
+exports.mySemesterGrades = async (req, res, next) => {//[]
     let id = req.params.id;
     let courseId = req.params.courseCode;
     let gradeType = req.params.gradeType;
@@ -352,7 +336,7 @@ exports.mySemesterGrades = async (req, res, next) => {
 }
 
 
-exports.semesterAttendme = async (req, res, next) => {
+exports.semesterAttendme = async (req, res, next) => {//[]
     let studentId = req.params.id
     let courseId = req.params.courseCode;
     let lectureNumber = req.body.lectureNumber;
@@ -385,7 +369,7 @@ exports.semesterAttendme = async (req, res, next) => {
 }
 
 
-exports.viewMySemesterAttendance = async (req, res, next) => {
+exports.viewMySemesterAttendance = async (req, res, next) => {//[]
     let id = req.params.id;
     let courseId = req.params.courseCode;
     let semester_time = req.params.semester;
@@ -406,7 +390,7 @@ exports.viewMySemesterAttendance = async (req, res, next) => {
 }
 
 
-exports.viewSemesterAttendanceReport = async (req, res, next) => {
+exports.viewSemesterAttendanceReport = async (req, res, next) => {//[]
     let courseId = req.params.courseCode;
     let semester_time = req.params.semester;
     try {
@@ -454,15 +438,6 @@ exports.viewSemesterAttendanceReport = async (req, res, next) => {
                 arrayofreport
             );
         }
-
-        // teacherService.viewAttendanceReport(studentId, courseId, lectureNumber).then((attendance) => {
-        //     if (attendance) {
-        //         res.json(attendance);
-        //     }
-        // }).catch(err => {
-        //     console.log(err);
-        //     res.status(500).json({ msg: 'Internal Server Error' });
-        // })
     }
     catch (err) {
         console.log(err.message);
@@ -473,7 +448,7 @@ exports.viewSemesterAttendanceReport = async (req, res, next) => {
 
 
 
-exports.viewSemesterGradesReport = async (req, res, next) => {
+exports.viewSemesterGradesReport = async (req, res, next) => {//[]
     let courseId = req.params.courseCode;
     let semester_time = req.params.semester;
 
