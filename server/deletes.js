@@ -218,3 +218,16 @@
 // router.get('/course/tasks', TeacherStudentController.getTasks); //mo4trk m3 student
 
 // router.get('/user', adminController.getUser);
+
+
+
+
+
+
+    // static viewAttendance(studentId, courseId) {
+    //     return Attendance.find({ studentId, courseId });
+    // }
+        // static getlectureattendancetrue(courseId, lectureNumber) {
+    //     return Attendance.find({ courseId, lectureNumber, status: "true" })
+    // }
+

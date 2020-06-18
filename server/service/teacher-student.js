@@ -60,9 +60,7 @@ class teacherService {
         return newAttendance.save();
     }
 
-    // static viewAttendance(studentId, courseId) {
-    //     return Attendance.find({ studentId, courseId });
-    // }
+
     static async viewAttendance(studentId, courseId, semester_time, lectureNumber) {
         let fakedata = { "_id": "5eba5bb7900576e5c44f34b2", "studentId": studentId, "courseId": courseId, "lectureNumber": lectureNumber, "status": "no attendance", "__v": 0 }
 
@@ -109,10 +107,6 @@ class teacherService {
         return Attendance.find({ studentId: id, courseId, semester_time });
     }
 
-
-    // static getlectureattendancetrue(courseId, lectureNumber) {
-    //     return Attendance.find({ courseId, lectureNumber, status: "true" })
-    // }
 
 
 

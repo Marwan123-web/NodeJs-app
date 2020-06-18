@@ -81,7 +81,7 @@ class adminService {
     static async addCourseSemester(code, semester_time) {
         var semester_time = { semester_time: semester_time };
         let checkopencoursesemester = await Course.findOne({ courseCode: code }, { semesters: { $elemMatch: { semester_status: 'open' } } })
-        if (checkopencoursesemester) {
+        if (checkopencoursesemester.semesters.length >= 1) {
             return
         }
         else {
@@ -156,48 +156,43 @@ class adminService {
         let openemesters = await Course.findOne({ courseCode }, { semesters: { $elemMatch: { semester_status: 'open' } } });
         let courseSmesterTime = openemesters.semesters[0].semester_time;
         let courseGrades = openemesters.semesters[0].grades;
-        let arrayOfGrades = [];
-        // for (let i = 0; i < courseGrades.length; i++) {
-        //     arrayOfGrades[i] = courseGrades[i]
-        // }
-        // let finalCourseGrade = arrayOfGrades[arrayOfGrades.length - 1]
         var finalCourseGrade = courseGrades.find(o => o.type === 'Final');
         console.log(finalCourseGrade)
-        // let totalGrade = [];
-        // for (let i = 0; i < courseGrades.length; i++) {
-        //     totalGrade[i] = await Grade.findOne({ studentId, courseId: courseCode, semester_time: courseSmesterTime, gradeType: courseGrades[i].type })
-        // }
-        // let finalStudentGrade = await Grade.findOne({ studentId, courseId: courseCode, semester_time: courseSmesterTime, gradeType: 'Final' })
-        // let total = 0
-        // for (let i = 0; i < totalGrade.length; i++) {
-        //     total = total + totalGrade[i].score
-        // }
-        // let checkFinalCourseGarde30Percent = (finalCourseGrade.grade / 100) * 30;
-        // let StudentGradeInFinal = finalStudentGrade.score;
-        // if (total >= 50 && (StudentGradeInFinal >= checkFinalCourseGarde30Percent)) {
-        //     await User.findOne({ _id: studentId }, { courses: { $elemMatch: { Id: courseCode, semester_time: courseSmesterTime, status: 'new' } } })
-        //         .updateOne(
-        //             { 'courses.status': "new" }, // your query, usually match by _id
-        //             { $set: { 'courses.$.status': "pass" } }, // item(s) to match from array you want to pull/remove
-        //             { multi: false } // set this to true if you want to remove multiple elements.
-        //         );
-        // }
-        // else if (total >= 50 && (StudentGradeInFinal < checkFinalCourseGarde30Percent)) {
-        //     await User.findOne({ _id: studentId }, { courses: { $elemMatch: { Id: courseCode, semester_time: courseSmesterTime, status: 'new' } } })
-        //         .updateOne(
-        //             { 'courses.status': "new" }, // your query, usually match by _id
-        //             { $set: { 'courses.$.status': "fail" } }, // item(s) to match from array you want to pull/remove
-        //             { multi: false } // set this to true if you want to remove multiple elements.
-        //         );
-        // }
-        // else {
-        //     await User.findOne({ _id: studentId }, { courses: { $elemMatch: { Id: courseCode, semester_time: courseSmesterTime, status: 'new' } } })
-        //         .updateOne(
-        //             { 'courses.status': "new" }, // your query, usually match by _id
-        //             { $set: { 'courses.$.status': "fail" } }, // item(s) to match from array you want to pull/remove
-        //             { multi: false } // set this to true if you want to remove multiple elements.
-        //         );
-        // }
+        let totalGrade = [];
+        for (let i = 0; i < courseGrades.length; i++) {
+            totalGrade[i] = await Grade.findOne({ studentId, courseId: courseCode, semester_time: courseSmesterTime, gradeType: courseGrades[i].type })
+        }
+        let finalStudentGrade = await Grade.findOne({ studentId, courseId: courseCode, semester_time: courseSmesterTime, gradeType: 'Final' })
+        let total = 0
+        for (let i = 0; i < totalGrade.length; i++) {
+            total = total + totalGrade[i].score
+        }
+        let checkFinalCourseGarde30Percent = (finalCourseGrade.grade / 100) * 30;
+        let StudentGradeInFinal = finalStudentGrade.score;
+        if (total >= 50 && (StudentGradeInFinal >= checkFinalCourseGarde30Percent)) {
+            await User.findOne({ _id: studentId }, { courses: { $elemMatch: { Id: courseCode, semester_time: courseSmesterTime, status: 'new' } } })
+                .updateOne(
+                    { 'courses.status': "new" }, // your query, usually match by _id
+                    { $set: { 'courses.$.status': "pass" } }, // item(s) to match from array you want to pull/remove
+                    { multi: false } // set this to true if you want to remove multiple elements.
+                );
+        }
+        else if (total >= 50 && (StudentGradeInFinal < checkFinalCourseGarde30Percent)) {
+            await User.findOne({ _id: studentId }, { courses: { $elemMatch: { Id: courseCode, semester_time: courseSmesterTime, status: 'new' } } })
+                .updateOne(
+                    { 'courses.status': "new" }, // your query, usually match by _id
+                    { $set: { 'courses.$.status': "fail" } }, // item(s) to match from array you want to pull/remove
+                    { multi: false } // set this to true if you want to remove multiple elements.
+                );
+        }
+        else {
+            await User.findOne({ _id: studentId }, { courses: { $elemMatch: { Id: courseCode, semester_time: courseSmesterTime, status: 'new' } } })
+                .updateOne(
+                    { 'courses.status': "new" }, // your query, usually match by _id
+                    { $set: { 'courses.$.status': "fail" } }, // item(s) to match from array you want to pull/remove
+                    { multi: false } // set this to true if you want to remove multiple elements.
+                );
+        }
 
     }
     static getCourseSemesterStudents(courseCode, semester_time) {

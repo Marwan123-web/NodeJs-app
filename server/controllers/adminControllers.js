@@ -540,6 +540,8 @@ exports.addCourseSemesterGrade = async (req, res, next) => {//[]
     let grade = req.body.grade;
 
     try {
+        type = type.charAt(0).toUpperCase() +
+            type.slice(1);
         let checkforcourse = await Course.findOne({ courseCode });
         let checkforcoursesemester = await Course.findOne({ courseCode }, { semesters: { $elemMatch: { semester_time: semester_time } } });
         let checkforgradearr = checkforcoursesemester.semesters[0].grades;

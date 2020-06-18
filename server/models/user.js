@@ -10,7 +10,7 @@ const userSchema = mongoose.Schema({
     courses: [
         {
             Id: { type: String },
-            status: { type: String, default: 'new', enum: ["new", "pass", "fail", "postponed"] },
+            status: { type: String, default: 'new', enum: ["new", "pass", "fail",] },
             semester_time: { type: String },
         }
     ]
